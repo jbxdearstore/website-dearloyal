@@ -383,6 +383,165 @@ function pasangLogo() {
   };
 }
 
+/* ---------- wizard setup ---------- */
+let wz = null;
+
+function wizFrame(isi) {
+  app.innerHTML = '<div class="hal">' + kepala('Setup toko') +
+    '<div class="sec" style="margin-top:0"><div class="redup">Langkah ' + wz.n + ' dari 5</div>' +
+    '<div style="height:6px;border-radius:99px;background:#e2e8f0;margin:8px 0 18px">' +
+    '<div style="height:100%;width:' + (wz.n * 20) + '%;border-radius:99px;background:var(--utama);transition:width .4s"></div></div>' +
+    isi + '<div id="pesan" class="pesan"></div></div></div>';
+}
+
+function wizKartu(isi, n) {
+  return '<div class="pratinjau"><div class="kt" style="--w:' + wz.warna + '">' +
+    '<div class="kt-atas"><strong>' + esc(toko.nama) + '</strong><span>' + isi + '/' + n + '</span></div>' +
+    htmlStempel(isi, n, wz.ikon) +
+    '<div class="kt-info">Kumpulkan ' + (n - isi) + ' stempel lagi untuk: ' + esc(wz.hadiah || '-') + '</div></div></div>';
+}
+
+function tampilWizard() {
+  if (!wz) {
+    wz = { n: 1, warna: warnaAman(toko.warna), ikon: (toko.ikon in IKON) ? toko.ikon : 'bintang',
+           jumlah: toko.jumlah_stempel, hadiah: toko.teks_hadiah };
+  }
+  [null, wizLogo, wizTampilan, wizAturan, wizPin, wizSelesai][wz.n]();
+}
+
+function wizLogo() {
+  wizFrame('<h2 style="margin:0 0 4px">Logo toko</h2>' +
+    '<p class="sub">Boleh dilewati. Bisa diubah kapan saja di dashboard.</p>' +
+    '<div id="logoBox" style="margin-bottom:12px"></div>' +
+    '<input id="fileLogo" type="file" accept="image/png,image/jpeg,image/webp" style="display:none">' +
+    '<div class="aksi"><button type="button" id="bPilih" class="tombol putih">Pilih logo</button>' +
+    '<button type="button" id="bLanjut" class="tombol">Lanjut</button></div>');
+  const gambar = () => {
+    el('logoBox').innerHTML = toko.logo_path ? htmlLogo(toko.logo_path, 72, toko.nama)
+      : '<div class="redup">Belum ada logo.</div>';
+  };
+  gambar();
+  el('bPilih').onclick = () => el('fileLogo').click();
+  el('fileLogo').onchange = async () => {
+    const f = el('fileLogo').files[0];
+    el('fileLogo').value = '';
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) return pesan('File terlalu besar (maksimal 8 MB).', 'galat');
+    pesan('Mengunggah...', 'ok');
+    try { await unggahLogo(f); gambar(); pesan('Logo disimpan.', 'ok'); }
+    catch (e) { pesan(e.message || 'Gagal mengunggah logo.', 'galat'); }
+  };
+  el('bLanjut').onclick = () => { wz.n = 2; tampilWizard(); };
+}
+
+function wizTampilan() {
+  wizFrame('<h2 style="margin:0 0 4px">Tampilan kartu</h2>' +
+    '<p class="sub">Pilih warna dan ikon stempel.</p><div id="pr"></div>' +
+    '<div class="baris"><label>Warna kartu</label><div class="warna-pilih" id="swatch"></div></div>' +
+    '<div class="baris"><label for="wIkon">Ikon stempel</label><select id="wIkon">' +
+      Object.keys(IKON).map(k => '<option value="' + k + '">' + IKON[k] + ' ' + k + '</option>').join('') +
+    '</select></div>' +
+    '<div class="aksi"><button type="button" id="bKembali" class="tombol putih">Kembali</button>' +
+    '<button type="button" id="bLanjut" class="tombol">Lanjut</button></div>');
+  const gambar = () => {
+    el('pr').innerHTML = wizKartu(3, wz.jumlah);
+    el('swatch').innerHTML = WARNA.map(c =>
+      '<button type="button" class="sw' + (c.toLowerCase() === wz.warna.toLowerCase() ? ' pilih' : '') +
+      '" data-warna="' + c + '" style="background:' + c + '" aria-label="Warna ' + c + '"></button>').join('');
+  };
+  el('wIkon').value = wz.ikon;
+  gambar();
+  el('swatch').onclick = (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    wz.warna = b.dataset.warna;
+    gambar();
+  };
+  el('wIkon').onchange = () => { wz.ikon = el('wIkon').value; gambar(); };
+  el('bKembali').onclick = () => { wz.n = 1; tampilWizard(); };
+  el('bLanjut').onclick = async () => {
+    const { error } = await db.rpc('ubah_pengaturan_toko',
+      { p_toko_id: toko.id, p_data: { warna: wz.warna, ikon: wz.ikon } });
+    if (error) return pesan(error.message, 'galat');
+    toko.warna = wz.warna; toko.ikon = wz.ikon;
+    wz.n = 3; tampilWizard();
+  };
+}
+
+function wizAturan() {
+  const contoh = ['Gratis 1 minuman', 'Diskon 20%', 'Gratis 1 item'];
+  wizFrame('<h2 style="margin:0 0 4px">Aturan kartu</h2>' +
+    '<p class="sub">Berapa stempel yang dikumpulkan, dan apa hadiahnya.</p><div id="pr"></div>' +
+    '<div class="baris"><label for="wJumlah">Jumlah stempel</label><select id="wJumlah">' +
+      [6, 8, 10, 12].map(n => '<option value="' + n + '">' + n + ' stempel</option>').join('') + '</select></div>' +
+    '<div class="baris"><label for="wHadiah">Hadiah</label><input id="wHadiah" maxlength="80"></div>' +
+    '<div class="chips">' + contoh.map(c => '<button type="button" class="chip" data-contoh="' + c + '">' + c + '</button>').join('') + '</div>' +
+    '<div class="aksi"><button type="button" id="bKembali" class="tombol putih">Kembali</button>' +
+    '<button type="button" id="bLanjut" class="tombol">Lanjut</button></div>');
+  const gambar = () => { el('pr').innerHTML = wizKartu(Math.min(3, wz.jumlah), wz.jumlah); };
+  el('wJumlah').value = String(wz.jumlah);
+  el('wHadiah').value = wz.hadiah;
+  gambar();
+  el('wJumlah').onchange = () => { wz.jumlah = Number(el('wJumlah').value); gambar(); };
+  el('wHadiah').oninput = () => { wz.hadiah = el('wHadiah').value; gambar(); };
+  document.querySelectorAll('[data-contoh]').forEach(b => {
+    b.onclick = () => { wz.hadiah = b.dataset.contoh; el('wHadiah').value = wz.hadiah; gambar(); };
+  });
+  el('bKembali').onclick = () => { wz.n = 2; tampilWizard(); };
+  el('bLanjut').onclick = async () => {
+    const teks = el('wHadiah').value.trim();
+    if (teks.length < 2) return pesan('Isi hadiah minimal 2 huruf.', 'galat');
+    const { error } = await db.rpc('ubah_pengaturan_toko',
+      { p_toko_id: toko.id, p_data: { jumlah_stempel: wz.jumlah, teks_hadiah: teks } });
+    if (error) return pesan(error.message, 'galat');
+    wz.hadiah = teks; toko.jumlah_stempel = wz.jumlah; toko.teks_hadiah = teks;
+    wz.n = 4; tampilWizard();
+  };
+}
+
+function wizPin() {
+  wizFrame('<h2 style="margin:0 0 4px">PIN kasir</h2>' +
+    '<p class="sub">Kasir memakai PIN ini untuk masuk ke halaman kasir. Berikan hanya ke kasir kamu.</p>' +
+    '<div class="baris"><label for="wPin">PIN (6 digit angka)</label>' +
+    '<input id="wPin" class="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></div>' +
+    '<div class="aksi"><button type="button" id="bKembali" class="tombol putih">Kembali</button>' +
+    '<button type="button" id="bLanjut" class="tombol">Simpan PIN dan lanjut</button></div>');
+  el('bKembali').onclick = () => { wz.n = 3; tampilWizard(); };
+  el('bLanjut').onclick = async () => {
+    const pin = el('wPin').value.trim();
+    if (!/^[0-9]{6}$/.test(pin)) return pesan('PIN harus 6 digit angka.', 'galat');
+    const { error } = await db.rpc('atur_pin_kasir', { p_toko_id: toko.id, p_pin: pin });
+    if (error) return pesan(error.message, 'galat');
+    wz.n = 5; tampilWizard();
+  };
+}
+
+function wizSelesai() {
+  const link = location.origin + '/t/' + toko.slug;
+  wizFrame('<h2 style="margin:0 0 4px">Toko siap dipakai</h2>' +
+    '<p class="sub">Cetak QR ini dan tempel di kasir. Pembeli scan untuk bergabung.</p>' +
+    '<div class="qr-toko" id="qrToko"></div><div class="redup" style="margin:8px 0">' + esc(link) + '</div>' +
+    '<div class="baris-aksi"><button type="button" id="salinLink" class="tombol putih kecil">Salin link</button>' +
+    '<button type="button" id="simpanQr" class="tombol putih kecil">Simpan QR sebagai gambar</button></div>' +
+    '<div class="aksi" style="margin-top:16px"><button type="button" id="bKembali" class="tombol putih">Kembali</button>' +
+    '<button type="button" id="bSelesai" class="tombol">Selesai, buka dashboard</button></div>');
+  const m = matriksQr(link);
+  el('qrToko').innerHTML = svgQr(m);
+  el('simpanQr').onclick = () => unduhQr(m, 'qr-toko-' + toko.slug + '.png');
+  el('salinLink').onclick = async () => {
+    try { await navigator.clipboard.writeText(link); el('salinLink').textContent = 'Link tersalin ✓'; }
+    catch (e) { prompt('Salin link ini:', link); }
+  };
+  el('bKembali').onclick = () => { wz.n = 4; tampilWizard(); };
+  el('bSelesai').onclick = async () => {
+    const { error } = await db.rpc('selesai_setup', { p_toko_id: toko.id });
+    if (error) return pesan(error.message, 'galat');
+    toko.setup_selesai = true;
+    wz = null;
+    tampilDash();
+  };
+}
+
 /* ---------- klik ---------- */
 app.onclick = async (e) => {
   const b = e.target.closest('button');
@@ -417,6 +576,7 @@ async function muat() {
   if (!toko) return tampilForm();
   if (toko.status === 'menunggu') return tampilMenunggu();
   if (toko.status === 'ditolak') return tampilDitolak();
+  if (toko.status === 'aktif' && !toko.setup_selesai) return tampilWizard();
   tampilDash();
 }
 muat();
