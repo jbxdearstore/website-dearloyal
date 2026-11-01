@@ -144,7 +144,14 @@ function tampilDash() {
       '<div class="redup" style="margin-top:8px">Cetak dan tempel di kasir. Pembeli scan untuk bergabung.</div>' +
       '<div class="baris-aksi"><button type="button" id="salinLink" class="tombol putih kecil">Salin link</button>' +
       '<button type="button" id="simpanQr" class="tombol putih kecil">Simpan QR sebagai gambar</button></div></div>' +
-        '<div class="sec"><h3>Pengaturan toko</h3>' +
+      '<div class="sec"><h3>Logo toko</h3>' +
+      '<div id="logoBox" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"></div>' +
+      '<input id="fileLogo" type="file" accept="image/png,image/jpeg,image/webp" style="display:none">' +
+      '<div class="baris-aksi"><button type="button" id="bPilihLogo" class="tombol putih kecil">Pilih logo</button>' +
+      '<button type="button" id="bHapusLogo" class="tombol merah kecil">Hapus logo</button></div>' +
+      '<div class="redup" style="margin-top:8px">Gambar otomatis dikecilkan. Logo tampil di kartu pembeli dan halaman toko.</div>' +
+      '<div id="pesanLogo" class="pesan"></div></div>' +
+      '<div class="sec"><h3>Pengaturan toko</h3>' +
       '<div class="pratinjau" id="pratinjau"></div>' +
       '<form id="fSet" novalidate>' +
       '<div class="baris"><label>Warna kartu</label><div class="warna-pilih" id="swatch"></div></div>' +
@@ -195,6 +202,7 @@ function tampilDash() {
   };
 
   pasangPengaturan();
+  pasangLogo();
   muatRingkasan();
   muatMember();
 }
@@ -305,6 +313,73 @@ function pasangPengaturan() {
     p.textContent = 'Pengaturan disimpan.';
     p.className = 'pesan tampil ok';
     muatMember();
+  };
+}
+
+function kompresLogo(file) {
+  return new Promise((ok, gagal) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, 512 / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(img.width * s));
+      cv.height = Math.max(1, Math.round(img.height * s));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      cv.toBlob(b => b ? ok(b) : gagal(new Error('Gagal memproses gambar.')), 'image/webp', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); gagal(new Error('File bukan gambar yang valid.')); };
+    img.src = url;
+  });
+}
+
+async function unggahLogo(file) {
+  const blob = await kompresLogo(file);
+  if (blob.size > 500000) throw new Error('Gambar masih terlalu besar. Pakai gambar yang lebih sederhana.');
+  const ext = blob.type === 'image/webp' ? 'webp' : 'png';
+  const path = toko.id + '/logo-' + Date.now() + '.' + ext;
+  const { error } = await db.storage.from('logo').upload(path, blob,
+    { contentType: blob.type, cacheControl: '31536000' });
+  if (error) throw error;
+  const { error: e2 } = await db.rpc('ubah_pengaturan_toko',
+    { p_toko_id: toko.id, p_data: { logo_path: path } });
+  if (e2) throw e2;
+  const lama = toko.logo_path;
+  toko.logo_path = path;
+  if (lama && lama !== path) await db.storage.from('logo').remove([lama]);
+}
+
+function pasangLogo() {
+  const box = el('logoBox'), p = el('pesanLogo');
+  const gambar = () => {
+    box.innerHTML = toko.logo_path ? htmlLogo(toko.logo_path, 72, toko.nama)
+      : '<div class="redup">Belum ada logo.</div>';
+    el('bHapusLogo').style.display = toko.logo_path ? '' : 'none';
+  };
+  const info = (t, j) => { p.textContent = t; p.className = 'pesan tampil ' + j; };
+  gambar();
+
+  el('bPilihLogo').onclick = () => el('fileLogo').click();
+  el('fileLogo').onchange = async () => {
+    const f = el('fileLogo').files[0];
+    el('fileLogo').value = '';
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) return info('File terlalu besar (maksimal 8 MB).', 'galat');
+    info('Mengunggah...', 'ok');
+    try { await unggahLogo(f); gambar(); info('Logo disimpan.', 'ok'); }
+    catch (e) { info(e.message || 'Gagal mengunggah logo.', 'galat'); }
+  };
+  el('bHapusLogo').onclick = async () => {
+    if (!confirm('Hapus logo toko?')) return;
+    const lama = toko.logo_path;
+    const { error } = await db.rpc('ubah_pengaturan_toko',
+      { p_toko_id: toko.id, p_data: { logo_path: null } });
+    if (error) return info(error.message, 'galat');
+    toko.logo_path = null;
+    if (lama) await db.storage.from('logo').remove([lama]);
+    gambar();
+    info('Logo dihapus.', 'ok');
   };
 }
 

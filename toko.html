@@ -50,6 +50,7 @@ function halamanToko(t, sudahMasuk) {
   document.title = t.nama + ' | DearLoyal';
   const w = warnaAman(t.warna);
   isi.innerHTML =
+  (t.logo_path ? '<div style="margin-bottom:10px">' + htmlLogo(t.logo_path, 72, t.nama) + '</div>' : '') +
     '<h1 class="merek" style="color:' + w + '">' + esc(t.nama) + '</h1>' +
     '<p class="sub">Kartu stempel digital</p>' +
     '<div class="kt" style="--w:' + w + ';text-align:left">' +
