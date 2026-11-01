@@ -152,3 +152,15 @@ select{width:100%;padding:12px 14px;border:1px solid var(--garis);border-radius:
 .qr-toko svg{width:100%;max-width:220px;height:auto;border-radius:12px;border:1px solid var(--garis)}
 .baris-aksi{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .hal-nav{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+
+/* Pengaturan toko */
+.warna-pilih{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:36px;height:36px;border-radius:50%;border:3px solid #fff;
+  box-shadow:0 0 0 1px var(--garis);cursor:pointer;transition:transform .15s}
+.sw:active{transform:scale(.9)}
+.sw.pilih{box-shadow:0 0 0 3px var(--teks)}
+.dua{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+textarea{width:100%;padding:12px 14px;border:1px solid var(--garis);border-radius:12px;
+  font:inherit;background:#fff;color:var(--teks);resize:vertical}
+textarea:focus{outline:none;border-color:var(--utama);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.pratinjau{margin-bottom:16px}
