@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>DearLoyal</title>
+<link rel="stylesheet" href="/css/dl.css">
+</head>
+<body>
+<div class="tengah">
+  <div class="panel pusat" id="isi">Memuat...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script src="/js/app.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+const el = id => document.getElementById(id);
+const slug = decodeURIComponent(location.pathname.split('/')[2] || '').toLowerCase();
+const isi = el('isi');
+
+function tampilPesan(teks, jenis) {
+  const p = el('pesan');
+  p.textContent = teks;
+  p.className = 'pesan tampil ' + jenis;
+}
+
+function halamanNonaktif(nama) {
+  document.title = 'Website sedang dinonaktifkan | DearLoyal';
+  isi.innerHTML =
+    '<div class="ikon-besar">⏸</div>' +
+    '<h1 class="merek" style="color:var(--teks)">Website sedang dinonaktifkan</h1>' +
+    '<p class="sub">Halaman ' + esc(nama) + ' sedang tidak aktif untuk sementara. Silakan coba lagi nanti.</p>' +
+    '<a class="tombol putih" href="/">Kembali ke beranda</a>' +
+    '<p class="foot">Powered by XDEAR STORE</p>';
+}
+
+function halamanTidakAda() {
+  document.title = 'Toko tidak ditemukan | DearLoyal';
+  isi.innerHTML =
+    '<div class="ikon-besar">?</div>' +
+    '<h1 class="merek" style="color:var(--teks)">Toko tidak ditemukan</h1>' +
+    '<p class="sub">Periksa kembali link atau QR yang kamu scan.</p>' +
+    '<a class="tombol putih" href="/">Kembali ke beranda</a>';
+}
+
+function halamanToko(t, sudahMasuk) {
+  document.title = t.nama + ' | DearLoyal';
+  const w = warnaAman(t.warna);
+  isi.innerHTML =
+    '<h1 class="merek" style="color:' + w + '">' + esc(t.nama) + '</h1>' +
+    '<p class="sub">Kartu stempel digital</p>' +
+    '<div class="kt" style="--w:' + w + ';text-align:left">' +
+      '<div class="kt-atas"><strong>' + esc(t.nama) + '</strong><span>0/' + t.jumlah_stempel + '</span></div>' +
+      htmlStempel(0, t.jumlah_stempel, t.ikon) +
+    '</div>' +
+    '<div class="hadiah">Kumpulkan ' + t.jumlah_stempel + ' stempel, dapatkan <strong>' +
+      esc(t.teks_hadiah) + '</strong></div>' +
+    (t.syarat_hadiah ? '<p class="sub" style="margin-top:-6px">' + esc(t.syarat_hadiah) + '</p>' : '') +
+    '<button type="button" id="gabung" class="tombol" style="background:' + w + '">' +
+      (sudahMasuk ? 'Gabung' : 'Masuk untuk bergabung') + '</button>' +
+    '<div id="pesan" class="pesan"></div>' +
+    '<p class="foot">Powered by XDEAR STORE</p>';
+
+  el('gabung').onclick = async () => {
+    const { data } = await db.auth.getSession();
+    if (!data.session) {
+      return location.href = '/masuk?next=' + encodeURIComponent('/t/' + t.slug);
+    }
+    const tombol = el('gabung');
+    tombol.disabled = true;
+    const { data: hasil, error } = await db.rpc('gabung_toko', { p_slug: t.slug });
+    if (error) {
+      tombol.disabled = false;
+      return tampilPesan(error.message, 'galat');
+    }
+    tampilPesan(hasil.baru ? 'Berhasil bergabung! Membuka kartu kamu...'
+                           : 'Kamu sudah punya kartu di toko ini. Membuka kartu...', 'ok');
+    setTimeout(() => location.href = '/kartu', 900);
+  };
+}
+
+(async () => {
+  const { data: sesi } = await db.auth.getSession();
+  const { data: t, error } = await db.rpc('lihat_toko_publik', { p_slug: slug });
+  if (error || !t) return halamanTidakAda();
+  if (t.status === 'nonaktif') return halamanNonaktif(t.nama);
+  halamanToko(t, !!sesi.session);
+})();
+</script>
+</body>
+</html>

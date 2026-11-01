@@ -20,12 +20,13 @@
     <div class="redup">ID pembeli</div>
   </div>
 
-  <div class="kosong">Kartu toko kamu akan tampil di sini.</div>
+  <div id="daftar" class="daftar"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/config.js"></script>
 <script src="/js/app.js"></script>
+<script src="/js/ui.js"></script>
 <script>
 const el = id => document.getElementById(id);
 
@@ -46,6 +47,13 @@ const el = id => document.getElementById(id);
   el('nama').textContent = profil.nama;
   el('username').textContent = profil.username;
   el('idunik').textContent = profil.id_unik.slice(0, 4) + ' ' + profil.id_unik.slice(4);
+    const { data: daftar } = await db.rpc('kartu_saya');
+  const box = el('daftar');
+  if (!daftar || daftar.length === 0) {
+    box.innerHTML = '<div class="kosong">Belum ada kartu. Scan QR di kasir toko untuk bergabung.</div>';
+  } else {
+    box.innerHTML = daftar.map(htmlKartu).join('');
+  }
 })();
 
 el('keluar').onclick = async () => {
