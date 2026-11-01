@@ -91,3 +91,9 @@ a.kt:active{transform:scale(.985)}
 .hadiah{margin:16px 0;padding:12px;border-radius:12px;background:#f8fafc;
   border:1px solid var(--garis);font-size:14px}
 .foot{margin-top:18px;font-size:12px;color:var(--redup)}
+
+/* QR pembeli */
+.qr-kotak{margin-top:16px;background:var(--kartu);border:1px solid var(--garis);
+  border-radius:20px;padding:20px;text-align:center;animation:muncul .5s ease both}
+#qr svg{width:100%;max-width:240px;height:auto;border-radius:12px;border:1px solid var(--garis)}
+.qr-kotak .redup{margin:12px 0}
