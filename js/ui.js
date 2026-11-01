@@ -29,8 +29,21 @@ function htmlKartu(k) {
     : 'Kumpulkan ' + sisa + ' stempel lagi untuk: ' + esc(k.teks_hadiah);
   return '<a class="kt' + (mati ? ' mati' : '') + '" style="--w:' + warnaAman(k.warna) +
     '" href="/t/' + esc(k.slug) + '">' +
-    '<div class="kt-atas"><strong>' + esc(k.toko_nama) + '</strong><span>' +
+    '<div class="kt-atas"><span style="display:flex;align-items:center;gap:8px">' +
+    htmlLogo(k.logo_path, 28, k.toko_nama) + '<strong>' + esc(k.toko_nama) + '</strong></span><span>' +
     k.jumlah_stempel + '/' + k.target_stempel + '</span></div>' +
     htmlStempel(k.jumlah_stempel, k.target_stempel, k.ikon) +
     '<div class="kt-info">' + info + '</div></a>';
+}
+
+function urlLogo(path) {
+  return path ? DL.SUPABASE_URL + '/storage/v1/object/public/logo/' + encodeURI(path) : '';
+}
+
+function htmlLogo(path, px, nama) {
+  const u = urlLogo(path);
+  if (!u) return '';
+  return '<img src="' + esc(u) + '" alt="Logo ' + esc(nama || '') + '" width="' + px +
+    '" height="' + px + '" style="width:' + px + 'px;height:' + px +
+    'px;object-fit:contain;border-radius:12px;background:#fff">';
 }
