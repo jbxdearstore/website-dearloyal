@@ -97,3 +97,19 @@ a.kt:active{transform:scale(.985)}
   border-radius:20px;padding:20px;text-align:center;animation:muncul .5s ease both}
 #qr svg{width:100%;max-width:240px;height:auto;border-radius:12px;border:1px solid var(--garis)}
 .qr-kotak .redup{margin:12px 0}
+
+/* Kasir */
+.pin{text-align:center;font-size:24px;letter-spacing:8px}
+.hasil{margin-top:16px;background:var(--kartu);border:1px solid var(--garis);
+  border-radius:20px;padding:18px;animation:muncul .4s ease both}
+.hasil h2{margin:0;font-size:20px}
+.aksi{display:grid;gap:10px;margin-top:14px}
+.tombol.merah{background:#fff;color:var(--merah);border:1px solid #fecaca}
+.tombol.merah:hover{background:#fef2f2}
+.tombol.hijau{background:var(--hijau)}
+.tombol.hijau:hover{background:#15803d}
+.cari{display:grid;grid-template-columns:1fr auto;gap:8px}
+.scan{position:fixed;inset:0;background:#000;z-index:50;display:none;flex-direction:column}
+.scan.tampil{display:flex}
+.scan video{flex:1;width:100%;min-height:0;object-fit:cover}
+.scan .bawah{padding:16px;text-align:center;color:#fff}
