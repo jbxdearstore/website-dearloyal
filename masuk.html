@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk | DearLoyal</title>
+<link rel="stylesheet" href="/css/dl.css">
+</head>
+<body>
+<div class="tengah">
+  <div class="panel">
+    <h1 class="merek">DearLoyal</h1>
+    <p class="sub">Kartu stempel digital</p>
+
+    <div class="tab">
+      <button type="button" id="tabMasuk" class="aktif">Masuk</button>
+      <button type="button" id="tabDaftar">Daftar</button>
+    </div>
+
+    <button type="button" id="google" class="tombol putih">
+      <span class="g">G</span> Lanjut dengan Google
+    </button>
+
+    <div class="pisah">atau pakai email</div>
+
+    <form id="form" novalidate>
+      <div class="baris" id="barisNama" style="display:none">
+        <label for="nama">Nama</label>
+        <input id="nama" type="text" autocomplete="name" maxlength="60">
+      </div>
+      <div class="baris">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email">
+      </div>
+      <div class="baris">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password">
+      </div>
+      <button type="submit" id="kirim" class="tombol">Masuk</button>
+    </form>
+
+    <div id="pesan" class="pesan"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script src="/js/app.js"></script>
+<script>
+const el = id => document.getElementById(id);
+const next = aman(new URLSearchParams(location.search).get('next'));
+let mode = 'masuk';
+
+function kembali() {
+  return location.origin + '/masuk' + (next ? '?next=' + encodeURIComponent(next) : '');
+}
+function pergi() { location.replace(next || '/kartu'); }
+function tampil(teks, jenis) {
+  const p = el('pesan');
+  p.textContent = teks;
+  p.className = 'pesan tampil ' + jenis;
+}
+function sembunyi() { el('pesan').className = 'pesan'; }
+
+function setMode(m) {
+  mode = m;
+  el('tabMasuk').classList.toggle('aktif', m === 'masuk');
+  el('tabDaftar').classList.toggle('aktif', m === 'daftar');
+  el('barisNama').style.display = m === 'daftar' ? 'block' : 'none';
+  el('kirim').textContent = m === 'daftar' ? 'Daftar' : 'Masuk';
+  el('password').autocomplete = m === 'daftar' ? 'new-password' : 'current-password';
+  sembunyi();
+}
+el('tabMasuk').onclick = () => setMode('masuk');
+el('tabDaftar').onclick = () => setMode('daftar');
+
+// Sudah login? langsung pindah
+db.auth.getSession().then(({ data }) => { if (data.session) pergi(); });
+db.auth.onAuthStateChange((ev, sesi) => { if (sesi) pergi(); });
+
+el('google').onclick = async () => {
+  sembunyi();
+  const { error } = await db.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: kembali() }
+  });
+  if (error) tampil(terjemah(error.message), 'galat');
+};
+
+el('form').onsubmit = async (e) => {
+  e.preventDefault();
+  sembunyi();
+  const email = el('email').value.trim();
+  const password = el('password').value;
+  const nama = el('nama').value.trim();
+
+  if (!email || !password) return tampil('Isi email dan password.', 'galat');
+  if (mode === 'daftar') {
+    if (nama.length < 2) return tampil('Isi nama minimal 2 huruf.', 'galat');
+    if (password.length < 8) return tampil('Password minimal 8 karakter.', 'galat');
+  }
+
+  const tombol = el('kirim');
+  tombol.disabled = true;
+
+  if (mode === 'masuk') {
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    tombol.disabled = false;
+    if (error) tampil(terjemah(error.message), 'galat');
+    return;
+  }
+
+  const { data, error } = await db.auth.signUp({
+    email, password,
+    options: { data: { full_name: nama }, emailRedirectTo: kembali() }
+  });
+  tombol.disabled = false;
+  if (error) return tampil(terjemah(error.message), 'galat');
+  if (data.user && data.user.identities && data.user.identities.length === 0)
+    return tampil('Email sudah terdaftar. Silakan masuk.', 'galat');
+  if (data.session) return pergi();
+  tampil('Cek email kamu dan klik link verifikasi untuk melanjutkan.', 'ok');
+};
+</script>
+</body>
+</html>

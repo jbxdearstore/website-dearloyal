@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kartu saya | DearLoyal</title>
+<link rel="stylesheet" href="/css/dl.css">
+</head>
+<body>
+<div class="hal">
+  <div class="atas">
+    <h1 class="merek">DearLoyal</h1>
+    <button type="button" id="keluar" class="tombol putih kecil">Keluar</button>
+  </div>
+
+  <div class="kartu-profil">
+    <h2 id="nama">...</h2>
+    <div class="redup">@<span id="username"></span></div>
+    <div class="id" id="idunik"></div>
+    <div class="redup">ID pembeli</div>
+  </div>
+
+  <div class="kosong">Kartu toko kamu akan tampil di sini.</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script src="/js/app.js"></script>
+<script>
+const el = id => document.getElementById(id);
+
+(async () => {
+  const { data } = await db.auth.getSession();
+  if (!data.session) return location.replace('/masuk');
+
+  const { data: profil, error } = await db
+    .from('profiles')
+    .select('nama, username, id_unik')
+    .eq('id', data.session.user.id)
+    .single();
+
+  if (error || !profil) {
+    el('nama').textContent = 'Profil belum tersedia';
+    return;
+  }
+  el('nama').textContent = profil.nama;
+  el('username').textContent = profil.username;
+  el('idunik').textContent = profil.id_unik.slice(0, 4) + ' ' + profil.id_unik.slice(4);
+})();
+
+el('keluar').onclick = async () => {
+  await db.auth.signOut();
+  location.replace('/masuk');
+};
+</script>
+</body>
+</html>
