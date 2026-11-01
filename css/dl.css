@@ -64,3 +64,30 @@ input:focus{outline:none;border-color:var(--utama);box-shadow:0 0 0 3px rgba(37,
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
 }
+
+/* Kartu stempel */
+.daftar{display:grid;gap:14px;margin-top:16px}
+.kt{display:block;text-decoration:none;color:#fff;border-radius:20px;padding:18px;
+  background:linear-gradient(135deg,var(--w,#2563eb),color-mix(in srgb,var(--w,#2563eb) 65%,#000));
+  box-shadow:0 10px 24px rgba(15,23,42,.14);animation:muncul .5s ease both;
+  transition:transform .15s}
+a.kt:active{transform:scale(.985)}
+.kt.mati{filter:grayscale(1);opacity:.7}
+.kt-atas{display:flex;justify-content:space-between;align-items:center;font-size:17px;margin-bottom:14px}
+.kt-info{margin-top:14px;font-size:13px;opacity:.92}
+.stg{display:grid;gap:10px}
+.st{aspect-ratio:1;display:grid;place-items:center;border-radius:50%;
+  border:2px dashed rgba(255,255,255,.55);font-size:14px;color:rgba(255,255,255,.75);
+  animation:muncul .4s ease both}
+.st.isi{background:#fff;border:2px solid #fff;color:var(--w,#2563eb);font-size:20px;
+  animation:cap .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes cap{from{opacity:0;transform:scale(1.8) rotate(-20deg)}to{opacity:1;transform:none}}
+
+/* Halaman toko */
+.pusat{text-align:center}
+.ikon-besar{width:72px;height:72px;margin:0 auto 14px;display:grid;place-items:center;
+  border-radius:50%;background:#f1f5f9;font-size:30px;animation:denyut 2s ease-in-out infinite}
+@keyframes denyut{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.hadiah{margin:16px 0;padding:12px;border-radius:12px;background:#f8fafc;
+  border:1px solid var(--garis);font-size:14px}
+.foot{margin-top:18px;font-size:12px;color:var(--redup)}
