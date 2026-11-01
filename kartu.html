@@ -20,6 +20,11 @@
     <div class="redup">ID pembeli</div>
   </div>
 
+    <div class="qr-kotak">
+    <div id="qr"></div>
+    <div class="redup">Tunjukkan QR ini ke kasir</div>
+    <button type="button" id="simpanQr" class="tombol putih kecil">Simpan QR sebagai gambar</button>
+    </div>
   <div id="daftar" class="daftar"></div>
 </div>
 
@@ -27,6 +32,8 @@
 <script src="/js/config.js"></script>
 <script src="/js/app.js"></script>
 <script src="/js/ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/js/qr.js"></script>
 <script>
 const el = id => document.getElementById(id);
 
@@ -47,6 +54,9 @@ const el = id => document.getElementById(id);
   el('nama').textContent = profil.nama;
   el('username').textContent = profil.username;
   el('idunik').textContent = profil.id_unik.slice(0, 4) + ' ' + profil.id_unik.slice(4);
+  const m = matriksQr(location.origin + '/c/' + profil.id_unik);
+  el('qr').innerHTML = svgQr(m);
+  el('simpanQr').onclick = () => unduhQr(m, 'qr-dearloyal-' + profil.id_unik + '.png');
     const { data: daftar } = await db.rpc('kartu_saya');
   const box = el('daftar');
   if (!daftar || daftar.length === 0) {
