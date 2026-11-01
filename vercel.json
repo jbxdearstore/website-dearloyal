@@ -1,8 +1,8 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/t/:slug/kasir", "destination": "/kasir.html" },
-    { "source": "/t/:slug", "destination": "/toko.html" },
-    { "source": "/c/:id", "destination": "/c.html" }
+    { "source": "/t/:slug/kasir", "destination": "/kasir" },
+    { "source": "/t/:slug", "destination": "/toko" },
+    { "source": "/c/:id", "destination": "/c" }
   ]
 }
