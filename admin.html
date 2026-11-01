@@ -20,12 +20,13 @@ const app = el('app');
 const LABEL = { menunggu: 'Menunggu', aktif: 'Aktif', nonaktif: 'Nonaktif', ditolak: 'Ditolak' };
 let semua = [], filter = 'semua';
 
-function tolakAkses() {
+function tolakAkses(email) {
   app.innerHTML = '<div class="tengah"><div class="panel pusat">' +
     '<div class="ikon-besar">🔒</div>' +
     '<h1 class="merek" style="color:var(--teks)">Tidak diizinkan</h1>' +
-    '<p class="sub">Halaman ini khusus admin.</p>' +
-    '<a class="tombol putih" href="/">Kembali ke beranda</a></div></div>';
+    '<p class="sub">Halaman ini khusus admin.<br>Kamu masuk sebagai: <strong>' + esc(email || '-') + '</strong></p>' +
+    '<div class="aksi"><button type="button" id="keluar" class="tombol">Keluar dan ganti akun</button>' +
+    '<a class="tombol putih" href="/">Kembali ke beranda</a></div></div></div>';
 }
 
 function linkWa(n) {
@@ -132,7 +133,7 @@ app.onclick = async (e) => {
   const { data: s } = await db.auth.getSession();
   if (!s.session) return location.replace('/masuk?next=' + encodeURIComponent('/admin'));
   const { data: p } = await db.from('profiles').select('peran').eq('id', s.session.user.id).single();
-  if (!p || p.peran !== 'admin') return tolakAkses();
+  if (!p || p.peran !== 'admin') return tolakAkses(s.session.user.email);
   await muat();
 })();
 </script>
