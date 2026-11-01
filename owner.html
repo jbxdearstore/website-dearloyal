@@ -144,6 +144,24 @@ function tampilDash() {
       '<div class="redup" style="margin-top:8px">Cetak dan tempel di kasir. Pembeli scan untuk bergabung.</div>' +
       '<div class="baris-aksi"><button type="button" id="salinLink" class="tombol putih kecil">Salin link</button>' +
       '<button type="button" id="simpanQr" class="tombol putih kecil">Simpan QR sebagai gambar</button></div></div>' +
+        '<div class="sec"><h3>Pengaturan toko</h3>' +
+      '<div class="pratinjau" id="pratinjau"></div>' +
+      '<form id="fSet" novalidate>' +
+      '<div class="baris"><label>Warna kartu</label><div class="warna-pilih" id="swatch"></div></div>' +
+      '<div class="dua">' +
+        '<div class="baris"><label for="sIkon">Ikon stempel</label><select id="sIkon">' +
+          Object.keys(IKON).map(k => '<option value="' + k + '">' + IKON[k] + ' ' + k + '</option>').join('') + '</select></div>' +
+        '<div class="baris"><label for="sJumlah">Jumlah stempel</label><select id="sJumlah">' +
+          [6, 8, 10, 12].map(n => '<option value="' + n + '">' + n + '</option>').join('') + '</select></div>' +
+      '</div>' +
+      '<div class="baris"><label for="sHadiah">Hadiah</label><input id="sHadiah" maxlength="80"></div>' +
+      '<div class="baris"><label for="sSyarat">Syarat hadiah (opsional)</label><textarea id="sSyarat" rows="2" maxlength="300"></textarea></div>' +
+      '<div class="baris"><label for="sIg">Instagram (opsional, tanpa @)</label><input id="sIg" maxlength="30" autocapitalize="none"></div>' +
+      '<div class="baris"><label for="sJeda">Jeda antar stempel</label><select id="sJeda">' +
+        [[0, 'Tanpa jeda'], [5, '5 menit'], [10, '10 menit'], [30, '30 menit'], [60, '1 jam'], [240, '4 jam'], [1440, '1 hari']]
+          .map(j => '<option value="' + j[0] + '">' + j[1] + '</option>').join('') + '</select></div>' +
+      '<button type="submit" class="tombol kecil" style="width:auto">Simpan pengaturan</button></form>' +
+      '<div id="pesanSet" class="pesan"></div></div>' +
     '<div class="sec"><h3>PIN kasir</h3>' +
       '<form id="fPin" novalidate><div class="baris"><label for="pinBaru">PIN baru (6 digit angka)</label>' +
       '<input id="pinBaru" class="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></div>' +
@@ -176,6 +194,7 @@ function tampilDash() {
     p.className = 'pesan tampil ok';
   };
 
+  pasangPengaturan();
   muatRingkasan();
   muatMember();
 }
@@ -210,6 +229,83 @@ async function muatMember() {
     '<span class="redup">Halaman ' + halaman + ' dari ' + maks + ' · ' + data.total + ' member</span>' +
     '<button type="button" data-nav="1" class="tombol putih kecil"' +
       (halaman >= maks ? ' disabled' : '') + '>Berikutnya</button></div>';
+}
+
+const WARNA = ['#2563eb', '#0ea5e9', '#16a34a', '#b45309', '#dc2626', '#db2777', '#7c3aed', '#0f172a'];
+
+function pasangPengaturan() {
+  let warna = warnaAman(toko.warna);
+  const ikon = el('sIkon'), jumlah = el('sJumlah'), hadiah = el('sHadiah'), jeda = el('sJeda');
+
+  ikon.value = toko.ikon in IKON ? toko.ikon : 'bintang';
+  jumlah.value = String(toko.jumlah_stempel);
+  hadiah.value = toko.teks_hadiah || '';
+  el('sSyarat').value = toko.syarat_hadiah || '';
+  el('sIg').value = toko.instagram || '';
+  if (![...jeda.options].some(o => Number(o.value) === toko.jeda_menit)) {
+    jeda.add(new Option(toko.jeda_menit + ' menit', toko.jeda_menit));
+  }
+  jeda.value = String(toko.jeda_menit);
+
+  const pilihSw = () => {
+    el('swatch').innerHTML = WARNA.map(c =>
+      '<button type="button" class="sw' + (c.toLowerCase() === warna.toLowerCase() ? ' pilih' : '') +
+      '" data-warna="' + c + '" style="background:' + c + '" aria-label="Warna ' + c + '"></button>').join('');
+  };
+  const pratinjau = () => {
+    const n = Number(jumlah.value);
+    const isi = Math.min(3, n);
+    el('pratinjau').innerHTML =
+      '<div class="kt" style="--w:' + warna + '"><div class="kt-atas"><strong>' + esc(toko.nama) +
+      '</strong><span>' + isi + '/' + n + '</span></div>' +
+      htmlStempel(isi, n, ikon.value) +
+      '<div class="kt-info">Kumpulkan ' + (n - isi) + ' stempel lagi untuk: ' + esc(hadiah.value || '-') + '</div></div>';
+  };
+  pilihSw(); pratinjau();
+
+  el('swatch').onclick = (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    warna = b.dataset.warna;
+    pilihSw(); pratinjau();
+  };
+  ikon.onchange = pratinjau;
+  jumlah.onchange = pratinjau;
+  hadiah.oninput = pratinjau;
+
+  el('fSet').onsubmit = async (e) => {
+    e.preventDefault();
+    const p = el('pesanSet');
+    const teks = hadiah.value.trim();
+    if (teks.length < 2) {
+      p.textContent = 'Isi hadiah minimal 2 huruf.';
+      p.className = 'pesan tampil galat';
+      return;
+    }
+    const baruJumlah = Number(jumlah.value);
+    if (baruJumlah !== toko.jumlah_stempel &&
+        !confirm('Jumlah stempel berubah dan berlaku untuk semua kartu, termasuk yang sedang berjalan. Lanjutkan?')) return;
+
+    const { error } = await db.rpc('ubah_pengaturan_toko', {
+      p_toko_id: toko.id,
+      p_data: {
+        warna: warna, ikon: ikon.value, jumlah_stempel: baruJumlah, teks_hadiah: teks,
+        syarat_hadiah: el('sSyarat').value, instagram: el('sIg').value.trim(),
+        jeda_menit: Number(jeda.value)
+      }
+    });
+    if (error) {
+      p.textContent = error.message;
+      p.className = 'pesan tampil galat';
+      return;
+    }
+    toko.warna = warna; toko.ikon = ikon.value; toko.jumlah_stempel = baruJumlah;
+    toko.teks_hadiah = teks; toko.syarat_hadiah = el('sSyarat').value;
+    toko.instagram = el('sIg').value.trim(); toko.jeda_menit = Number(jeda.value);
+    p.textContent = 'Pengaturan disimpan.';
+    p.className = 'pesan tampil ok';
+    muatMember();
+  };
 }
 
 /* ---------- klik ---------- */
