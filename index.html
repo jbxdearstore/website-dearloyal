@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DearLoyal</title>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;
+       font-family:system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  .kotak{text-align:center;padding:24px}
+  h1{margin:0 0 8px;font-size:28px}
+  p{margin:0;color:#64748b}
+  #status{margin-top:16px;font-size:14px}
+</style>
+</head>
+<body>
+  <div class="kotak">
+    <h1>DearLoyal</h1>
+    <p>Kartu stempel digital. Segera hadir.</p>
+    <p id="status">Mengecek koneksi database...</p>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <script>
+    const db = supabase.createClient(DL.SUPABASE_URL, DL.SUPABASE_KEY);
+    db.rpc('lihat_toko_publik', { p_slug: 'tidak-ada' }).then(({ error }) => {
+      document.getElementById('status').textContent =
+        error ? 'Database gagal: ' + error.message
+              : 'Terhubung ke database ✓';
+    });
+  </script>
+</body>
+</html>
