@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kasir | DearLoyal</title>
+<link rel="stylesheet" href="/css/dl.css">
+</head>
+<body>
+<div id="app"><div class="tengah"><div class="panel pusat">Memuat...</div></div></div>
+
+<div id="scan" class="scan">
+  <video id="vid" playsinline muted></video>
+  <canvas id="cv" style="display:none"></canvas>
+  <div class="bawah">
+    <div id="scanInfo">Arahkan kamera ke QR pembeli</div>
+    <button type="button" id="tutupScan" class="tombol putih" style="margin-top:12px">Tutup</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="/js/config.js"></script>
+<script src="/js/app.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+const el = id => document.getElementById(id);
+const app = el('app');
+const slug = decodeURIComponent(location.pathname.split('/')[2] || '').toLowerCase();
+const KUNCI = 'dl_kasir_' + slug;
+let toko = null, token = null, cur = null, terakhir = null;
+
+/* ---------- sesi (diingat 12 jam di perangkat ini) ---------- */
+function simpanSesi(t) {
+  try { localStorage.setItem(KUNCI, JSON.stringify({ token: t, exp: Date.now() + 11.5 * 3600 * 1000 })); } catch (e) {}
+}
+function bacaSesi() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KUNCI) || 'null');
+    if (s && s.token && s.exp > Date.now()) return s;
+  } catch (e) {}
+  return null;
+}
+function hapusSesi() { try { localStorage.removeItem(KUNCI); } catch (e) {} }
+
+function pesan(teks, jenis) {
+  const p = el('pesan');
+  if (!p) return;
+  p.textContent = teks;
+  p.className = 'pesan tampil ' + jenis;
+}
+function formatId(i) { return i.slice(0, 4) + ' ' + i.slice(4); }
+
+/* ---------- halaman khusus ---------- */
+function halamanNonaktif(nama) {
+  document.title = 'Website sedang dinonaktifkan | DearLoyal';
+  app.innerHTML = '<div class="tengah"><div class="panel pusat">' +
+    '<div class="ikon-besar">⏸</div>' +
+    '<h1 class="merek" style="color:var(--teks)">Website sedang dinonaktifkan</h1>' +
+    '<p class="sub">Halaman ' + esc(nama) + ' sedang tidak aktif untuk sementara. Silakan coba lagi nanti.</p>' +
+    '<a class="tombol putih" href="/">Kembali ke beranda</a>' +
+    '<p class="foot">Powered by XDEAR STORE</p></div></div>';
+}
+function halamanTidakAda() {
+  document.title = 'Toko tidak ditemukan | DearLoyal';
+  app.innerHTML = '<div class="tengah"><div class="panel pusat">' +
+    '<div class="ikon-besar">?</div>' +
+    '<h1 class="merek" style="color:var(--teks)">Toko tidak ditemukan</h1>' +
+    '<p class="sub">Periksa kembali link yang kamu buka.</p>' +
+    '<a class="tombol putih" href="/">Kembali ke beranda</a></div></div>';
+}
+
+/* ---------- layar PIN ---------- */
+function layarPin(info) {
+  const w = warnaAman(toko.warna);
+  app.innerHTML = '<div class="tengah"><div class="panel pusat">' +
+    '<h1 class="merek" style="color:' + w + '">' + esc(toko.nama) + '</h1>' +
+    '<p class="sub">Halaman kasir</p>' +
+    '<form id="fPin" novalidate>' +
+      '<div class="baris" style="text-align:left"><label for="pin">PIN kasir</label>' +
+      '<input id="pin" class="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></div>' +
+      '<button type="submit" id="bMasuk" class="tombol" style="background:' + w + '">Masuk</button>' +
+    '</form><div id="pesan" class="pesan"></div></div></div>';
+  if (info) pesan(info, 'galat');
+
+  el('fPin').onsubmit = async (e) => {
+    e.preventDefault();
+    const pin = el('pin').value.trim();
+    if (!/^[0-9]{6}$/.test(pin)) return pesan('PIN harus 6 digit angka.', 'galat');
+    const b = el('bMasuk');
+    b.disabled = true;
+    const { data, error } = await db.rpc('kasir_masuk', { p_slug: slug, p_pin: pin });
+    b.disabled = false;
+    if (error) return pesan('Terjadi kesalahan. Coba lagi.', 'galat');
+    if (!data.ok) {
+      el('pin').value = '';
+      return pesan(data.pesan + (data.sisa_percobaan !== undefined
+        ? ' Sisa percobaan: ' + data.sisa_percobaan + '.' : ''), 'galat');
+    }
+    token = data.token;
+    simpanSesi(token);
+    layarKasir();
+  };
+}
+
+function sesiHabis() {
+  hapusSesi();
+  token = null;
+  layarPin('Sesi kasir habis. Masukkan PIN lagi.');
+}
+
+/* ---------- layar kasir ---------- */
+function layarKasir() {
+  cur = null;
+  terakhir = null;
+  const w = warnaAman(toko.warna);
+  app.innerHTML = '<div class="hal">' +
+    '<div class="atas"><div><h1 class="merek" style="color:' + w + '">' + esc(toko.nama) +
+    '</h1><div class="redup">Kasir</div></div>' +
+    '<button type="button" id="keluar" class="tombol putih kecil">Keluar</button></div>' +
+    '<form id="fCari" class="cari" novalidate>' +
+      '<input id="kata" type="text" placeholder="Username atau ID 8 digit" autocapitalize="none" autocomplete="off">' +
+      '<button type="submit" class="tombol kecil" style="background:' + w + '">Cari</button></form>' +
+    '<button type="button" id="bScan" class="tombol putih" style="margin-top:10px">Scan QR pembeli</button>' +
+    '<div id="pesan" class="pesan"></div><div id="hasil"></div></div>';
+
+  el('keluar').onclick = async () => {
+    await db.rpc('kasir_keluar', { p_token: token });
+    hapusSesi();
+    token = null;
+    layarPin();
+  };
+  el('fCari').onsubmit = (e) => {
+    e.preventDefault();
+    const k = el('kata').value.trim();
+    if (k) cari(k);
+  };
+  el('bScan').onclick = mulaiScan;
+}
+
+async function cari(kata) {
+  el('pesan').className = 'pesan';
+  const { data, error } = await db.rpc('kasir_cari', { p_token: token, p_kata: kata });
+  if (error) return pesan('Terjadi kesalahan. Coba lagi.', 'galat');
+  if (!data.ok) {
+    if (data.sesi_habis) return sesiHabis();
+    cur = null;
+    el('hasil').innerHTML = '';
+    return pesan(data.pesan, 'galat');
+  }
+  if (!cur || cur.id_unik !== data.id_unik) terakhir = null;
+  cur = data;
+  tampilHasil();
+}
+
+function tampilHasil() {
+  const w = warnaAman(toko.warna);
+  const c = cur;
+  let aksi = '';
+  if (c.penuh) {
+    aksi += '<button type="button" id="bKlaim" class="tombol hijau">Klaim hadiah: ' + esc(toko.teks_hadiah) + '</button>';
+  } else {
+    aksi += '<button type="button" id="bStempel" class="tombol" style="background:' + w + '">Tambah stempel</button>';
+  }
+  if (terakhir && terakhir.id_unik === c.id_unik) {
+    aksi += '<button type="button" id="bBatal" class="tombol merah">Batalkan stempel terakhir</button>';
+  }
+  el('hasil').innerHTML = '<div class="hasil">' +
+    '<h2>' + esc(c.nama) + '</h2>' +
+    '<div class="redup">@' + esc(c.username) + ' · ID ' + formatId(c.id_unik) + '</div>' +
+    (c.punya_kartu ? '' : '<div class="redup" style="margin-top:6px">Belum punya kartu di toko ini. Kartu dibuat saat stempel pertama.</div>') +
+    '<div class="kt" style="--w:' + w + ';margin-top:14px">' +
+      '<div class="kt-atas"><strong>Kartu #' + c.nomor_kartu + '</strong><span>' +
+      c.jumlah_stempel + '/' + c.target_stempel + '</span></div>' +
+      htmlStempel(c.jumlah_stempel, c.target_stempel, toko.ikon) + '</div>' +
+    '<div class="aksi">' + aksi + '</div></div>';
+
+  if (el('bStempel')) el('bStempel').onclick = stempel;
+  if (el('bKlaim')) el('bKlaim').onclick = klaim;
+  if (el('bBatal')) el('bBatal').onclick = batal;
+}
+
+async function stempel() {
+  const b = el('bStempel');
+  b.disabled = true;
+  const { data, error } = await db.rpc('kasir_stempel', { p_token: token, p_id_unik: cur.id_unik });
+  if (error) { b.disabled = false; return pesan('Terjadi kesalahan. Coba lagi.', 'galat'); }
+  if (!data.ok) {
+    if (data.sesi_habis) return sesiHabis();
+    b.disabled = false;
+    return pesan(data.pesan, 'galat');
+  }
+  cur.jumlah_stempel = data.jumlah_stempel;
+  cur.penuh = data.penuh;
+  cur.punya_kartu = true;
+  terakhir = { id: data.stempel_id, id_unik: cur.id_unik };
+  tampilHasil();
+  pesan(data.penuh ? 'Stempel ditambahkan. Kartu penuh!' : 'Stempel ditambahkan.', 'ok');
+}
+
+async function batal() {
+  if (!confirm('Batalkan stempel terakhir untuk ' + cur.nama + '?')) return;
+  const { data, error } = await db.rpc('kasir_batalkan', { p_token: token, p_stempel_id: terakhir.id });
+  if (error) return pesan('Terjadi kesalahan. Coba lagi.', 'galat');
+  if (!data.ok) {
+    if (data.sesi_habis) return sesiHabis();
+    return pesan(data.pesan, 'galat');
+  }
+  cur.jumlah_stempel = data.jumlah_stempel;
+  cur.penuh = cur.jumlah_stempel >= cur.target_stempel;
+  terakhir = null;
+  tampilHasil();
+  pesan('Stempel dibatalkan.', 'ok');
+}
+
+async function klaim() {
+  if (!confirm('Berikan hadiah "' + toko.teks_hadiah + '" kepada ' + cur.nama + '?')) return;
+  const { data, error } = await db.rpc('kasir_klaim', { p_token: token, p_id_unik: cur.id_unik });
+  if (error) return pesan('Terjadi kesalahan. Coba lagi.', 'galat');
+  if (!data.ok) {
+    if (data.sesi_habis) return sesiHabis();
+    return pesan(data.pesan, 'galat');
+  }
+  cur.jumlah_stempel = 0;
+  cur.penuh = false;
+  cur.nomor_kartu = data.nomor_kartu_baru;
+  terakhir = null;
+  tampilHasil();
+  pesan('Hadiah diklaim: ' + data.teks_hadiah + '. Kartu baru dimulai.', 'ok');
+}
+
+/* ---------- scan QR ---------- */
+let stream = null, jalan = false;
+
+async function mulaiScan() {
+  const box = el('scan');
+  el('scanInfo').textContent = 'Arahkan kamera ke QR pembeli';
+  box.classList.add('tampil');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }, audio: false
+    });
+  } catch (e) {
+    box.classList.remove('tampil');
+    return pesan('Kamera tidak bisa dibuka. Izinkan akses kamera, atau ketik username atau ID.', 'galat');
+  }
+  const v = el('vid');
+  v.srcObject = stream;
+  await v.play();
+  jalan = true;
+  const cv = el('cv');
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+
+  const loop = () => {
+    if (!jalan) return;
+    if (v.readyState === v.HAVE_ENOUGH_DATA && v.videoWidth) {
+      const skala = Math.min(1, 640 / v.videoWidth);
+      cv.width = Math.round(v.videoWidth * skala);
+      cv.height = Math.round(v.videoHeight * skala);
+      cx.drawImage(v, 0, 0, cv.width, cv.height);
+      const img = cx.getImageData(0, 0, cv.width, cv.height);
+      const h = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+      if (h && h.data) {
+        const m = h.data.match(/\/c\/(\d{8})(?:\D|$)/) || h.data.match(/^(\d{8})$/);
+        if (m) {
+          tutupScan();
+          el('kata').value = m[1];
+          cari(m[1]);
+          return;
+        }
+        el('scanInfo').textContent = 'QR ini bukan kartu DearLoyal.';
+      }
+    }
+    requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+function tutupScan() {
+  jalan = false;
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  el('vid').srcObject = null;
+  el('scan').classList.remove('tampil');
+}
+el('tutupScan').onclick = tutupScan;
+
+/* ---------- mulai ---------- */
+(async () => {
+  const { data: t, error } = await db.rpc('lihat_toko_publik', { p_slug: slug });
+  if (error || !t) return halamanTidakAda();
+  if (t.status === 'nonaktif') return halamanNonaktif(t.nama);
+  toko = t;
+  const s = bacaSesi();
+  if (s) { token = s.token; layarKasir(); } else layarPin();
+})();
+</script>
+</body>
+</html>
