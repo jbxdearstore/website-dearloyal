@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Profil | DearLoyal</title>
+<link rel="stylesheet" href="/css/dl.css">
+</head>
+<body>
+<div class="hal">
+  <div class="atas">
+    <div><h1 class="merek">DearLoyal</h1><div class="redup">Profil</div></div>
+    <a href="/kartu" class="tombol putih kecil" style="text-decoration:none">Kembali</a>
+  </div>
+  <div id="isi"><div class="kosong">Memuat...</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script src="/js/app.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+const el = id => document.getElementById(id);
+let uid = null;
+
+function info(id, teks, jenis) {
+  const p = el(id);
+  p.textContent = teks;
+  p.className = 'pesan tampil ' + jenis;
+}
+function fmtId(i) { return i.slice(0, 4) + ' ' + i.slice(4); }
+function waktu(s) {
+  return new Date(s).toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function render(p, email) {
+  el('isi').innerHTML =
+    '<div class="sec" style="margin-top:0"><h3>Data diri</h3>' +
+      '<div class="redup">ID pembeli</div><div style="font-size:22px;font-weight:700;letter-spacing:2px;margin-bottom:6px">' + esc(fmtId(p.id_unik)) + '</div>' +
+      '<div class="redup" style="margin-bottom:14px">Email: ' + esc(email || '-') + '</div>' +
+      '<form id="fProfil" novalidate>' +
+        '<div class="baris"><label for="pNama">Nama</label><input id="pNama" maxlength="60" value="' + esc(p.nama) + '"></div>' +
+        '<div class="baris"><label for="pUser">Username</label>' +
+          '<input id="pUser" maxlength="20" autocapitalize="none" autocomplete="off" value="' + esc(p.username) + '">' +
+          '<div class="redup" style="margin-top:6px">Huruf kecil dan angka saja, 4 sampai 20 karakter. Kasir mencari kamu lewat username atau ID.</div></div>' +
+        '<div class="baris"><label for="pHp">Nomor HP (opsional)</label>' +
+          '<input id="pHp" type="tel" inputmode="tel" placeholder="08xxxxxxxxxx" value="' + esc(p.nomor_hp || '') + '"></div>' +
+        '<button type="submit" id="bSimpan" class="tombol kecil" style="width:auto">Simpan</button>' +
+      '</form><div id="pesanProfil" class="pesan"></div></div>' +
+    '<div class="sec"><h3>Riwayat stempel</h3><div id="riwayat">Memuat...</div></div>' +
+    '<div class="sec"><h3>Hapus akun</h3>' +
+      '<p class="redup" style="margin-top:0">Akun, semua kartu, dan semua stempel kamu dihapus permanen dan tidak bisa dikembalikan. ' +
+      'Arsip yang sudah dikirim ke owner toko berada di luar kendali kami.</p>' +
+      '<button type="button" id="bHapus" class="tombol merah kecil" style="width:auto">Hapus akun saya</button>' +
+      '<div id="pesanHapus" class="pesan"></div></div>';
+
+  el('fProfil').onsubmit = simpan;
+  el('bHapus').onclick = hapusAkun;
+}
+
+async function simpan(e) {
+  e.preventDefault();
+  const nama = el('pNama').value.trim();
+  const username = el('pUser').value.trim().toLowerCase();
+  let hp = el('pHp').value.replace(/[\s-]/g, '');
+
+  if (nama.length < 2 || nama.length > 60) return info('pesanProfil', 'Nama harus 2 sampai 60 karakter.', 'galat');
+  if (!/^[a-z0-9]{4,20}$/.test(username))
+    return info('pesanProfil', 'Username hanya boleh huruf kecil dan angka, 4 sampai 20 karakter, tanpa spasi atau simbol.', 'galat');
+  if (hp && !/^\+?[0-9]{9,15}$/.test(hp))
+    return info('pesanProfil', 'Nomor HP tidak valid. Contoh: 08123456789.', 'galat');
+
+  const b = el('bSimpan');
+  b.disabled = true;
+  const { data, error } = await db.from('profiles')
+    .update({ nama: nama, username: username, nomor_hp: hp || null })
+    .eq('id', uid).select('username');
+  b.disabled = false;
+
+  if (error) {
+    if (error.code === '23505') return info('pesanProfil', 'Username sudah dipakai. Pilih yang lain.', 'galat');
+    if (error.code === '23514') return info('pesanProfil', 'Data tidak sesuai aturan. Periksa lagi isian kamu.', 'galat');
+    return info('pesanProfil', 'Gagal menyimpan. Coba lagi.', 'galat');
+  }
+  if (!data || !data.length) return info('pesanProfil', 'Gagal menyimpan. Coba lagi.', 'galat');
+  el('pUser').value = username;
+  info('pesanProfil', 'Profil disimpan.', 'ok');
+}
+
+async function muatRiwayat() {
+  const box = el('riwayat');
+  const { data: kt } = await db.rpc('kartu_saya');
+  const nama = {};
+  (kt || []).forEach(k => { nama[k.kartu_id] = k.toko_nama; });
+
+  const { data, error } = await db.from('stempel')
+    .select('kartu_id, nomor_kartu, waktu, dibatalkan')
+    .order('waktu', { ascending: false }).limit(30);
+
+  if (error) return box.innerHTML = '<div class="redup">Gagal memuat riwayat.</div>';
+  if (!data.length) return box.innerHTML = '<div class="redup">Belum ada stempel.</div>';
+
+  box.innerHTML = data.map(s =>
+    '<div class="mem"><div><strong' + (s.dibatalkan ? ' style="text-decoration:line-through;color:var(--redup)"' : '') + '>' +
+    esc(nama[s.kartu_id] || 'Toko lain') + '</strong>' +
+    '<div class="redup">' + waktu(s.waktu) + '</div></div>' +
+    '<div style="text-align:right" class="redup">Kartu #' + s.nomor_kartu +
+    (s.dibatalkan ? '<br>dibatalkan' : '') + '</div></div>').join('') +
+    '<div class="redup" style="margin-top:10px">Menampilkan 30 stempel terakhir.</div>';
+}
+
+async function hapusAkun() {
+  const k = prompt('Akun, kartu, dan semua stempel kamu akan dihapus permanen dan tidak bisa dikembalikan.\n\nKetik HAPUS untuk melanjutkan:');
+  if (k === null) return;
+  if (k.trim() !== 'HAPUS') return info('pesanHapus', 'Konfirmasi tidak sesuai. Ketik HAPUS dengan huruf besar.', 'galat');
+  const { error } = await db.rpc('hapus_akun_saya');
+  if (error) return info('pesanHapus', error.message, 'galat');
+  try { await db.auth.signOut({ scope: 'local' }); } catch (e) {}
+  location.replace('/');
+}
+
+(async () => {
+  const { data: s } = await db.auth.getSession();
+  if (!s.session) return location.replace('/masuk?next=' + encodeURIComponent('/profil'));
+  uid = s.session.user.id;
+  const { data: p, error } = await db.from('profiles')
+    .select('nama, username, id_unik, nomor_hp').eq('id', uid).single();
+  if (error || !p) {
+    el('isi').innerHTML = '<div class="kosong">Profil belum tersedia.</div>';
+    return;
+  }
+  render(p, s.session.user.email);
+  muatRiwayat();
+})();
+</script>
+</body>
+</html>
