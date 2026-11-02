@@ -164,3 +164,6 @@ textarea{width:100%;padding:12px 14px;border:1px solid var(--garis);border-radiu
   font:inherit;background:#fff;color:var(--teks);resize:vertical}
 textarea:focus{outline:none;border-color:var(--utama);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
 .pratinjau{margin-bottom:16px}
+
+.badge.dihapus{background:#e2e8f0;color:#475569}
+.dropzona{padding:14px;border:1px dashed var(--garis);border-radius:12px;background:#f8fafc}
