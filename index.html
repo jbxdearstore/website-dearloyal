@@ -3,31 +3,200 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DearLoyal</title>
+<title>DearLoyal | Kartu stempel digital untuk toko kamu</title>
+<meta name="description" content="Kartu stempel digital untuk kafe, laundry, barbershop, dan toko kecil. Pelanggan tanpa aplikasi, setup sekitar 10 menit, bayar sekali.">
+<link rel="stylesheet" href="/css/dl.css">
+<script>document.documentElement.classList.add('js');</script>
 <style>
-  body{margin:0;min-height:100vh;display:grid;place-items:center;
-       font-family:system-ui,sans-serif;background:#f8fafc;color:#0f172a}
-  .kotak{text-align:center;padding:24px}
-  h1{margin:0 0 8px;font-size:28px}
-  p{margin:0;color:#64748b}
-  #status{margin-top:16px;font-size:14px}
+  .w{max-width:960px;margin:0 auto;padding:0 20px}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+  .hero{display:grid;gap:28px;align-items:center;padding:24px 0 32px}
+  @media (min-width:800px){.hero{grid-template-columns:1.1fr .9fr;padding:56px 0 40px}}
+  .hero h1{font-size:clamp(30px,6vw,46px);line-height:1.1;letter-spacing:-1px;margin:0 0 14px}
+  .hero p{color:var(--redup);font-size:17px;margin:0 0 22px}
+  .btns{display:flex;gap:10px;flex-wrap:wrap}
+  .btns .tombol{width:auto;padding:13px 22px;text-decoration:none}
+  section{padding:34px 0}
+  section h2{font-size:26px;letter-spacing:-.5px;margin:0 0 6px}
+  .lead{color:var(--redup);margin:0 0 22px}
+  .grid3{display:grid;gap:14px}
+  @media (min-width:700px){.grid3{grid-template-columns:repeat(3,1fr)}}
+  .fk{background:var(--kartu);border:1px solid var(--garis);border-radius:20px;padding:20px}
+  .fk h3{margin:0 0 6px;font-size:17px}
+  .fk p{margin:0;color:var(--redup);font-size:15px}
+  .no{width:34px;height:34px;border-radius:50%;background:var(--utama);color:#fff;
+    display:grid;place-items:center;font-weight:700;margin-bottom:12px}
+  .harga{max-width:420px;margin:0 auto;text-align:center;background:var(--kartu);
+    border:1px solid var(--garis);border-radius:24px;padding:28px 24px;
+    box-shadow:0 10px 30px rgba(15,23,42,.06)}
+  .harga .rp{font-size:42px;font-weight:800;letter-spacing:-1px;margin:6px 0 0}
+  .harga ul{list-style:none;padding:0;margin:18px 0;text-align:left}
+  .harga li{padding:7px 0 7px 26px;position:relative;font-size:15px}
+  .harga li::before{content:"✓";position:absolute;left:0;color:var(--hijau);font-weight:700}
+  details{background:var(--kartu);border:1px solid var(--garis);border-radius:16px;
+    padding:14px 18px;margin-bottom:10px}
+  summary{cursor:pointer;font-weight:600}
+  details p{margin:10px 0 0;color:var(--redup);font-size:15px}
+  footer{border-top:1px solid var(--garis);margin-top:24px;padding:24px 0 40px;
+    font-size:14px;color:var(--redup);text-align:center}
+  footer a{color:var(--redup);margin:0 8px}
+  .js .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+  .js .rv.tampil{opacity:1;transform:none}
+  .demo{max-width:340px;margin:0 auto;width:100%}
+  .melayang{animation:melayang 5s ease-in-out infinite}
+  @keyframes melayang{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 </style>
 </head>
 <body>
-  <div class="kotak">
-    <h1>DearLoyal</h1>
-    <p>Kartu stempel digital. Segera hadir.</p>
-    <p id="status">Mengecek koneksi database...</p>
+<div class="w">
+  <div class="top">
+    <span class="merek">DearLoyal</span>
+    <a class="tombol putih kecil" href="/masuk" style="text-decoration:none">Masuk</a>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/config.js"></script>
-  <script>
-    const db = supabase.createClient(DL.SUPABASE_URL, DL.SUPABASE_KEY);
-    db.rpc('lihat_toko_publik', { p_slug: 'tidak-ada' }).then(({ error }) => {
-      document.getElementById('status').textContent =
-        error ? 'Database gagal: ' + error.message
-              : 'Terhubung ke database ✓';
+
+  <div class="hero">
+    <div>
+      <h1>Kartu stempel digital untuk toko kamu</h1>
+      <p>Ganti kartu kertas dengan kartu digital. Pelanggan tanpa aplikasi, kasir cukup scan QR, dan kamu bisa melihat siapa saja yang sering datang.</p>
+      <div class="btns">
+        <a class="tombol" href="/owner">Daftar toko</a>
+        <a class="tombol putih" href="/t/kopi-demo">Lihat contoh kartu</a>
+      </div>
+    </div>
+    <div class="demo melayang">
+      <div class="kt" id="demoKartu" style="--w:#b45309">
+        <div class="kt-atas"><strong>Kopi Demo</strong><span id="demoHitung">0/8</span></div>
+        <div id="demoStempel"></div>
+        <div class="kt-info">Kumpulkan 8 stempel untuk: Gratis 1 kopi susu</div>
+      </div>
+    </div>
+  </div>
+
+  <section class="rv">
+    <h2>Cara kerjanya</h2>
+    <p class="lead">Tiga langkah, tanpa alat tambahan.</p>
+    <div class="grid3">
+      <div class="fk"><div class="no">1</div><h3>Pelanggan scan QR</h3>
+        <p>QR toko ditempel di kasir. Pelanggan daftar sekali dan langsung punya kartu di HP-nya.</p></div>
+      <div class="fk"><div class="no">2</div><h3>Kasir beri stempel</h3>
+        <p>Kasir scan QR pelanggan atau ketik username, lalu tekan Tambah stempel. Satu transaksi satu stempel.</p></div>
+      <div class="fk"><div class="no">3</div><h3>Hadiah diklaim</h3>
+        <p>Kartu penuh, kasir klaim hadiah, dan kartu baru langsung mulai dari nol.</p></div>
+    </div>
+  </section>
+
+  <section class="rv">
+    <h2>Dibuat sederhana untuk usaha kecil</h2>
+    <p class="lead">Semua yang dibutuhkan, tanpa ribet.</p>
+    <div class="grid3">
+      <div class="fk"><h3>Tanpa aplikasi</h3><p>Pelanggan cukup buka link atau scan QR. Bisa ditambahkan ke layar utama HP.</p></div>
+      <div class="fk"><h3>Kartu tidak hilang</h3><p>Ganti HP cukup masuk lagi dengan akun yang sama, dan kartu kembali.</p></div>
+      <div class="fk"><h3>Tampilan milik tokomu</h3><p>Atur logo, warna, ikon stempel, jumlah stempel, dan hadiah sesuai usaha kamu.</p></div>
+      <div class="fk"><h3>Kasir cukup PIN</h3><p>Kasir tidak perlu akun. Masuk dengan PIN toko, lalu langsung bekerja.</p></div>
+      <div class="fk"><h3>Dashboard owner</h3><p>Lihat jumlah member, stempel hari ini, dan hadiah yang sudah diklaim.</p></div>
+      <div class="fk"><h3>Data terpisah per toko</h3><p>Setiap toko hanya bisa melihat data member tokonya sendiri.</p></div>
+    </div>
+  </section>
+
+  <section class="rv">
+    <h2 style="text-align:center">Harga</h2>
+    <p class="lead" style="text-align:center">Bayar sekali, tanpa langganan bulanan.</p>
+    <div class="harga">
+      <div class="redup">Per toko</div>
+      <div class="rp">Rp199.000</div>
+      <div class="redup">sekali bayar, aktif selamanya</div>
+      <ul>
+        <li>Kartu stempel digital dan QR toko</li>
+        <li>Halaman kasir dengan PIN</li>
+        <li>Dashboard owner dan daftar member</li>
+        <li>Kustom logo, warna, ikon, dan hadiah</li>
+        <li>Mendukung sekitar 500 member</li>
+      </ul>
+      <a class="tombol" href="/owner" style="text-decoration:none">Daftar toko</a>
+      <p class="redup" style="margin:12px 0 0;font-size:13px">Pendaftaran ditinjau dulu oleh admin, lalu kami hubungi lewat WhatsApp.</p>
+    </div>
+  </section>
+
+  <section class="rv">
+    <h2>Pertanyaan umum</h2>
+    <p class="lead">Yang paling sering ditanyakan.</p>
+    <details><summary>Apakah pelanggan harus install aplikasi?</summary>
+      <p>Tidak. Pelanggan membuka link atau scan QR di browser HP, lalu masuk dengan Google atau email.</p></details>
+    <details><summary>Berapa lama setup toko?</summary>
+      <p>Sekitar 10 menit: unggah logo, pilih warna dan ikon, atur hadiah, buat PIN kasir, lalu cetak QR toko.</p></details>
+    <details><summary>Bagaimana cara mendaftar?</summary>
+      <p>Tekan Daftar toko, masuk dengan Google atau email, dan isi data toko. Admin akan menghubungi lewat WhatsApp, lalu setelah disetujui kamu bisa mulai setup.</p></details>
+    <details><summary>Bagaimana kalau pelanggan ganti HP?</summary>
+      <p>Cukup masuk lagi dengan akun yang sama. Kartu dan stempelnya masih ada.</p></details>
+    <details><summary>Siapa yang bisa melihat data pelanggan?</summary>
+      <p>Kasir hanya melihat nama dan jumlah stempel. Owner melihat nama, username, ID, dan stempel member tokonya. Email dan nomor HP pelanggan tidak ditampilkan.</p></details>
+    <details><summary>Apakah ada biaya bulanan?</summary>
+      <p>Tidak. Biaya per toko dibayar sekali dan toko aktif selamanya.</p></details>
+  </section>
+
+  <section class="rv" style="text-align:center">
+    <h2>Siap pakai kartu stempel digital?</h2>
+    <p class="lead">Daftarkan tokomu sekarang.</p>
+    <div class="btns" style="justify-content:center">
+      <a class="tombol" href="/owner">Daftar toko</a>
+      <a class="tombol putih" id="waLink" href="/masuk" target="_blank" rel="noopener">Tanya lewat WhatsApp</a>
+    </div>
+  </section>
+
+  <footer>
+    <div><a href="/syarat">Syarat Penggunaan</a> · <a href="/privasi">Kebijakan Privasi</a></div>
+    <div style="margin-top:8px">Powered by XDEAR STORE</div>
+  </footer>
+</div>
+
+<script src="/js/config.js"></script>
+<script src="/js/ui.js"></script>
+<script>
+/* tombol WhatsApp */
+(function () {
+  const wa = document.getElementById('waLink');
+  const d = String((window.DL && DL.ADMIN_WA) || '').replace(/[^0-9]/g, '');
+  if (d) wa.href = 'https://wa.me/' + d;
+  else wa.style.display = 'none';
+})();
+
+/* muncul saat di-scroll */
+(function () {
+  const semua = document.querySelectorAll('.rv');
+  if (!('IntersectionObserver' in window)) {
+    semua.forEach(e => e.classList.add('tampil'));
+    return;
+  }
+  const o = new IntersectionObserver((daftar) => {
+    daftar.forEach(x => { if (x.isIntersecting) { x.target.classList.add('tampil'); o.unobserve(x.target); } });
+  }, { threshold: 0.12 });
+  semua.forEach(e => o.observe(e));
+})();
+
+/* kartu contoh: stempel terisi satu per satu */
+(function () {
+  const total = 8;
+  const box = document.getElementById('demoStempel');
+  const hitung = document.getElementById('demoHitung');
+  box.innerHTML = htmlStempel(0, total, 'bintang');
+  const bulat = box.querySelectorAll('.st');
+  const kurang = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let n = 0;
+
+  function atur(k) {
+    bulat.forEach((b, i) => {
+      if (i < k) { b.classList.add('isi'); b.textContent = IKON.bintang; }
+      else { b.classList.remove('isi'); b.textContent = String(i + 1); }
     });
-  </script>
+    hitung.textContent = k + '/' + total;
+  }
+  if (kurang) { atur(5); return; }
+  setInterval(() => {
+    if (n < total) n++;
+    else n = 0;
+    atur(n);
+  }, 900);
+})();
+</script>
 </body>
 </html>
