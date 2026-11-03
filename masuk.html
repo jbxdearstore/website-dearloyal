@@ -36,6 +36,7 @@
         <label for="password">Password</label>
         <input id="password" type="password" autocomplete="current-password">
       </div>
+      <div id="captcha" style="margin:4px 0 14px"></div>
       <button type="submit" id="kirim" class="tombol">Masuk</button>
     </form>
 
@@ -43,6 +44,22 @@
   </div>
 </div>
 
+<script>
+var TS_KEY = '0x4AAAAAAFwH25ArVMhAgAo', tsId = null, tsToken = null;
+function siapCaptcha() {
+  tsId = turnstile.render('#captcha', {
+    sitekey: TS_KEY,
+    callback: function (t) { tsToken = t; },
+    'expired-callback': function () { tsToken = null; },
+    'error-callback': function () { tsToken = null; }
+  });
+}
+function resetCaptcha() {
+  tsToken = null;
+  if (window.turnstile && tsId !== null) turnstile.reset(tsId);
+}
+</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=siapCaptcha" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/config.js"></script>
 <script src="/js/app.js"></script>
@@ -100,13 +117,29 @@ el('form').onsubmit = async (e) => {
     if (password.length < 8) return tampil('Password minimal 8 karakter.', 'galat');
   }
 
+    if (!tsToken) return tampil('Tunggu centang verifikasi selesai, lalu coba lagi.', 'galat');
+
   const tombol = el('kirim');
   tombol.disabled = true;
+  const token = tsToken;
 
   if (mode === 'masuk') {
-    const { error } = await db.auth.signInWithPassword({ email, password });
+    const { error } = await db.auth.signInWithPassword({
+      email, password, options: { captchaToken: token }
+    });
     tombol.disabled = false;
+    resetCaptcha();
     if (error) tampil(terjemah(error.message), 'galat');
+    return;
+  }
+
+  const { data, error } = await db.auth.signUp({
+    email, password,
+    options: { data: { full_name: nama }, emailRedirectTo: kembali(), captchaToken: token }
+  });
+  tombol.disabled = false;
+  resetCaptcha();
+  if (error) return tampil(terjemah(error.message), 'galat');
     return;
   }
 
