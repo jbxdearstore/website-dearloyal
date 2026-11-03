@@ -17,5 +17,6 @@ function terjemah(pesan) {
     return 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.';
   if (p.includes('valid email') || p.includes('invalid email'))
     return 'Format email tidak valid.';
+    if (p.includes('captcha')) return 'Verifikasi robot gagal. Muat ulang halaman lalu coba lagi.';
   return pesan || 'Terjadi kesalahan. Coba lagi.';
 }
