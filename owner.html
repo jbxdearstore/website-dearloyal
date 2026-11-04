@@ -15,6 +15,7 @@
 <script src="/js/config.js"></script>
 <script src="/js/app.js"></script>
 <script src="/js/ui.js"></script>
+<script src="/js/lonceng.js"></script>
 <script src="/js/qr.js"></script>
 <script>
 const el = id => document.getElementById(id);
@@ -36,7 +37,8 @@ function tanggal(s) {
 function fmtId(i) { return i.slice(0, 4) + ' ' + i.slice(4); }
 function kepala(sub) {
   return '<div class="atas"><div><h1 class="merek">DearLoyal</h1><div class="redup">' + sub +
-    '</div></div><button type="button" id="keluar" class="tombol putih kecil">Keluar</button></div>';
+    '</div></div><div style="display:flex;gap:8px;align-items:center"><span class="slot-lonceng"></span>' +
+    '<button type="button" id="keluar" class="tombol putih kecil">Keluar</button></div></div>';
 }
 function pesan(teks, jenis) {
   const p = el('pesan');
