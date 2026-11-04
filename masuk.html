@@ -140,15 +140,6 @@ el('form').onsubmit = async (e) => {
   tombol.disabled = false;
   resetCaptcha();
   if (error) return tampil(terjemah(error.message), 'galat');
-    return;
-  }
-
-  const { data, error } = await db.auth.signUp({
-    email, password,
-    options: { data: { full_name: nama }, emailRedirectTo: kembali() }
-  });
-  tombol.disabled = false;
-  if (error) return tampil(terjemah(error.message), 'galat');
   if (data.user && data.user.identities && data.user.identities.length === 0)
     return tampil('Email sudah terdaftar. Silakan masuk.', 'galat');
   if (data.session) return pergi();
