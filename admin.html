@@ -19,7 +19,7 @@
 const el = id => document.getElementById(id);
 const app = el('app');
 const LABEL = { menunggu: 'Menunggu', aktif: 'Aktif', nonaktif: 'Nonaktif', ditolak: 'Ditolak', dihapus: 'Sampah' };
-const FILTER = ['semua', 'menunggu', 'aktif', 'nonaktif', 'ditolak', 'dihapus', 'pulihkan'];
+const FILTER = ['semua', 'menunggu', 'aktif', 'nonaktif', 'ditolak', 'dihapus', 'pulihkan', 'pengumuman'];
 let semua = [], filter = 'semua';
 
 function tolakAkses(email) {
@@ -58,8 +58,8 @@ function hitungStatus() {
 function chipsHtml() {
   const h = hitungStatus();
   return '<div class="chips">' + FILTER.map(f => {
-    const nama = f === 'semua' ? 'Semua' : f === 'pulihkan' ? 'Pulihkan' : LABEL[f];
-    const n = f === 'pulihkan' ? '' : ' (' + h[f] + ')';
+    const nama = f === 'semua' ? 'Semua' : f === 'pulihkan' ? 'Pulihkan' : f === 'pengumuman' ? 'Pengumuman' : LABEL[f];
+    const n = (f === 'pulihkan' || f === 'pengumuman') ? '' : ' (' + h[f] + ')';
     return '<button type="button" class="chip' + (f === filter ? ' aktif' : '') +
       '" data-filter="' + f + '">' + nama + n + '</button>';
   }).join('') + '</div>';
@@ -67,6 +67,7 @@ function chipsHtml() {
 
 function render() {
   if (filter === 'pulihkan') return renderPulihkan();
+  if (filter === 'pengumuman') return renderPengumuman();
   const daftar = filter === 'semua'
     ? semua.filter(t => t.status !== 'dihapus')
     : semua.filter(t => t.status === filter);
@@ -120,6 +121,55 @@ function renderPulihkan() {
     '<div class="dropzona"><input type="file" id="fileZip" accept=".zip,application/zip"></div>' +
     '<div class="aksi" style="margin-top:12px"><button type="button" id="bPulih" class="tombol hijau">Aktifkan</button></div>' +
     '<div id="pesanPulih" class="pesan"></div></div></div>';
+}
+
+const TUJUAN = { semua: 'Semua pengguna', owner: 'Owner saja', pembeli: 'Pembeli saja' };
+
+async function renderPengumuman() {
+  app.innerHTML = '<div class="hal lebar">' + kepala() + chipsHtml() +
+    '<div class="sec" style="margin-top:0"><h3>Kirim pengumuman</h3>' +
+    '<div class="baris"><label for="pJudul">Judul</label><input id="pJudul" maxlength="80"></div>' +
+    '<div class="baris"><label for="pIsi">Isi (maks. 500 karakter)</label><textarea id="pIsi" rows="4" maxlength="500"></textarea></div>' +
+    '<div class="baris"><label for="pTujuan">Tujuan</label><select id="pTujuan">' +
+    '<option value="semua">Semua pengguna</option><option value="owner">Owner saja</option>' +
+    '<option value="pembeli">Pembeli saja</option></select></div>' +
+    '<div class="aksi"><button type="button" id="bKirimP" class="tombol">Kirim</button></div>' +
+    '<div id="pesanP" class="pesan"></div></div>' +
+    '<div class="sec"><h3>Pengumuman terkirim</h3><div id="daftarP" class="redup">Memuat...</div></div></div>';
+  await muatPengumuman();
+}
+
+async function muatPengumuman() {
+  const { data, error } = await db.from('pengumuman')
+    .select('id,judul,isi,tujuan,dibuat_pada').order('dibuat_pada', { ascending: false }).limit(30);
+  const w = el('daftarP');
+  if (!w) return;
+  if (error) { w.textContent = 'Gagal memuat: ' + error.message; return; }
+  if (!data.length) { w.textContent = 'Belum ada pengumuman.'; return; }
+  w.innerHTML = data.map(x =>
+    '<div class="meta" style="padding:10px 0;border-bottom:1px solid var(--garis)">' +
+    '<b style="color:var(--teks)">' + esc(x.judul) + '</b> · ' + TUJUAN[x.tujuan] + ' · ' + tanggal(x.dibuat_pada) +
+    (x.isi ? '<div>' + esc(x.isi) + '</div>' : '') +
+    '<div class="aksi" style="margin-top:6px"><button type="button" class="tombol putih kecil" data-hapusp="' + x.id + '">Hapus</button></div></div>'
+  ).join('');
+}
+
+async function kirimPengumuman() {
+  const judul = el('pJudul').value.trim();
+  const isi = el('pIsi').value.trim();
+  const tujuan = el('pTujuan').value;
+  const p = el('pesanP');
+  const tampilP = (t, j) => { p.textContent = t; p.className = 'pesan tampil ' + j; };
+  if (judul.length < 3) return tampilP('Judul minimal 3 huruf.', 'galat');
+  if (!confirm('Kirim ke: ' + TUJUAN[tujuan] + '?')) return;
+  el('bKirimP').disabled = true;
+  const { error } = await db.rpc('kirim_pengumuman', { p_judul: judul, p_isi: isi, p_tujuan: tujuan });
+  el('bKirimP').disabled = false;
+  if (error) return tampilP(error.message, 'galat');
+  el('pJudul').value = '';
+  el('pIsi').value = '';
+  tampilP('Pengumuman terkirim.', 'ok');
+  await muatPengumuman();
 }
 
 async function ambil() {
@@ -278,6 +328,13 @@ app.onclick = async (e) => {
   if (!b) return;
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
   if (b.id === 'bPulih') return pulihkan();
+  if (b.id === 'bKirimP') return kirimPengumuman();
+  if (b.dataset.hapusp) {
+    if (!confirm('Hapus pengumuman ini? Pengumuman hilang dari lonceng semua orang.')) return;
+    const { error } = await db.rpc('hapus_pengumuman', { p_id: b.dataset.hapusp });
+    if (error) return alert(error.message);
+    return muatPengumuman();
+  }
   if (b.id === 'keluar') {
     await db.auth.signOut();
     return location.replace('/masuk');
