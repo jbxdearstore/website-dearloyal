@@ -4,12 +4,31 @@
       { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
 
+    function isiHtml(teks, dari) {
+    return esc(teks || '').replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)]/g, u =>
+      '<a href="' + u + '" target="_blank" rel="noopener noreferrer"' +
+      (dari ? ' data-dari="' + esc(dari) + '"' : '') + '>' + u + '</a>');
+  }
+
+  function labelHtml(x) {
+    if (x.jenis !== 'p') return '';
+    if (x.tujuan === 'toko') {
+      const logo = x.logo
+        ? '<img src="' + esc(urlLogo(x.logo)) + '" alt="" width="14" height="14" onerror="this.remove()" ' +
+          'style="width:14px;height:14px;object-fit:contain;border-radius:4px;background:#fff">'
+        : '';
+      return '<div class="lonceng-dari"><span class="lonceng-label" style="background:' +
+        warnaAman(x.warna) + '">' + logo + esc(x.nama || 'Toko') + '</span></div>';
+    }
+    return '<div class="lonceng-dari"><span class="lonceng-label dl">DearLoyal</span></div>';
+  }
+
   async function ambil() {
     const batas = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
     const r = await Promise.all([
       db.from('notifikasi').select('id,judul,isi,dibaca,dibuat_pada')
         .order('dibuat_pada', { ascending: false }).limit(30),
-      db.from('pengumuman').select('id,judul,isi,dibuat_pada')
+      db.from('pengumuman').select('id,judul,isi,dibuat_pada,tujuan,pengirim_nama,pengirim_warna,pengirim_logo')
         .gte('dibuat_pada', batas).order('dibuat_pada', { ascending: false }).limit(30),
       db.from('pengumuman_dibaca').select('pengumuman_id')
     ]);
@@ -17,7 +36,8 @@
     const semua = (r[0].data || []).map(x => ({
       jenis: 'n', id: x.id, judul: x.judul, isi: x.isi, baca: x.dibaca, waktu: x.dibuat_pada
     })).concat((r[1].data || []).map(x => ({
-      jenis: 'p', id: x.id, judul: x.judul, isi: x.isi, baca: sudah.has(x.id), waktu: x.dibuat_pada
+    jenis: 'p', id: x.id, judul: x.judul, isi: x.isi, baca: sudah.has(x.id), waktu: x.dibuat_pada,
+    tujuan: x.tujuan, nama: x.pengirim_nama, warna: x.pengirim_warna, logo: x.pengirim_logo
     })));
     semua.sort((a, b) => new Date(b.waktu) - new Date(a.waktu));
     return semua.slice(0, 30);
@@ -56,8 +76,9 @@
         h += '<div class="lonceng-kosong">Belum ada kabar.</div>';
       } else {
         data.forEach(x => {
-          h += '<div class="lonceng-item' + (x.baca ? '' : ' baru') + '"><b>' + esc(x.judul) +
-            '</b>' + esc(x.isi || '') + '<div class="redup">' + waktu(x.waktu) + '</div></div>';
+          h += '<div class="lonceng-item' + (x.baca ? '' : ' baru') + '">' + labelHtml(x) + '<b>' + esc(x.judul) +
+            '</b>' + isiHtml(x.isi, x.tujuan === 'toko' ? (x.nama || 'toko ini') : null) +
+            '<div class="redup">' + waktu(x.waktu) + '</div></div>';
         });
       }
       panel.innerHTML = h;
@@ -86,7 +107,12 @@
       panel.classList.add('buka');
       tandaiBaca();
     };
-    panel.onclick = (e) => e.stopPropagation();
+      panel.onclick = (e) => {
+      e.stopPropagation();
+      const a = e.target.closest('a[data-dari]');
+      if (a && !confirm('Kamu akan membuka tautan dari ' + a.dataset.dari +
+        ', bukan dari DearLoyal. Lanjutkan hanya kalau kamu percaya.')) e.preventDefault();
+    };
 
     await segarkan();
     const jam = setInterval(() => {
