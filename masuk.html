@@ -71,7 +71,22 @@ let mode = 'masuk';
 function kembali() {
   return location.origin + '/masuk' + (next ? '?next=' + encodeURIComponent(next) : '');
 }
-function pergi() { location.replace(next || '/kartu'); }
+let sedangPergi = false;
+async function pergi() {
+  if (sedangPergi) return;
+  sedangPergi = true;
+  if (next) return location.replace(next);
+  let tujuan = '/kartu';
+  try {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      const { data } = await db.from('profiles').select('peran').eq('id', user.id).maybeSingle();
+      if (data && data.peran === 'admin') tujuan = '/admin';
+      else if (data && data.peran === 'owner') tujuan = '/owner';
+    }
+  } catch (e) {}
+  location.replace(tujuan);
+}
 function tampil(teks, jenis) {
   const p = el('pesan');
   p.textContent = teks;
@@ -93,7 +108,7 @@ el('tabDaftar').onclick = () => setMode('daftar');
 
 // Sudah login? langsung pindah
 db.auth.getSession().then(({ data }) => { if (data.session) pergi(); });
-db.auth.onAuthStateChange((ev, sesi) => { if (sesi) pergi(); });
+db.auth.onAuthStateChange((ev, sesi) => { if (sesi) setTimeout(pergi, 0); });
 
 el('google').onclick = async () => {
   sembunyi();
