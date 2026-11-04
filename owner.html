@@ -176,6 +176,14 @@ function tampilDash() {
       '<input id="pinBaru" class="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></div>' +
       '<button type="submit" class="tombol kecil" style="width:auto">Simpan PIN</button></form>' +
       '<div id="pesanPin" class="pesan"></div></div>' +
+        '<div class="sec"><h3>Pengumuman ke pembeli</h3>' +
+      '<p class="redup" style="margin:0 0 12px">Tampil di lonceng semua pembeli yang punya kartu di tokomu. Maksimal 1 kali sehari.</p>' +
+      '<form id="fUmum" novalidate>' +
+      '<div class="baris"><label for="uJudul">Judul</label><input id="uJudul" maxlength="80"></div>' +
+      '<div class="baris"><label for="uIsi">Isi (maks. 300 karakter)</label><textarea id="uIsi" rows="3" maxlength="300"></textarea></div>' +
+      '<button type="submit" class="tombol kecil" style="width:auto">Kirim</button></form>' +
+      '<div id="pesanUmum" class="pesan"></div>' +
+      '<div id="daftarUmum" class="redup" style="margin-top:12px"></div></div>' +
     '<div class="sec"><h3>Member</h3>' +
       '<input id="cariMember" type="text" placeholder="Cari nama, username, atau ID" autocomplete="off">' +
       '<div id="listMember" style="margin-top:8px">Memuat...</div></div></div>';
@@ -191,6 +199,8 @@ function tampilDash() {
     clearTimeout(timer);
     timer = setTimeout(() => { kata = el('cariMember').value.trim(); halaman = 1; muatMember(); }, 350);
   };
+  el('fUmum').onsubmit = kirimUmum;
+  muatUmum();
   el('fPin').onsubmit = async (e) => {
     e.preventDefault();
     const pin = el('pinBaru').value.trim();
@@ -544,12 +554,49 @@ function wizSelesai() {
   };
 }
 
+/* ---------- pengumuman owner ---------- */
+async function muatUmum() {
+  const w = el('daftarUmum');
+  if (!w) return;
+  const { data, error } = await db.from('pengumuman')
+    .select('id,judul,isi,dibuat_pada').eq('toko_id', toko.id)
+    .order('dibuat_pada', { ascending: false }).limit(10);
+  if (error) { w.textContent = 'Gagal memuat: ' + error.message; return; }
+  if (!data.length) { w.textContent = 'Belum ada pengumuman.'; return; }
+  w.innerHTML = '<b style="color:var(--teks)">Pengumuman terkirim</b>' + data.map(x =>
+    '<div style="padding:10px 0;border-bottom:1px solid var(--garis)"><b style="color:var(--teks)">' + esc(x.judul) +
+    '</b> · ' + tanggal(x.dibuat_pada) + (x.isi ? '<div>' + esc(x.isi) + '</div>' : '') +
+    '<div class="baris-aksi" style="margin-top:6px"><button type="button" class="tombol putih kecil" data-hapusu="' +
+    x.id + '">Hapus</button></div></div>').join('');
+}
+
+async function kirimUmum(e) {
+  e.preventDefault();
+  const p = el('pesanUmum');
+  const tampilU = (t, j) => { p.textContent = t; p.className = 'pesan tampil ' + j; };
+  const judul = el('uJudul').value.trim();
+  if (judul.length < 3) return tampilU('Judul minimal 3 huruf.', 'galat');
+  if (!confirm('Kirim pengumuman ini ke semua pembeli di tokomu? Hanya bisa 1 kali sehari.')) return;
+  const { error } = await db.rpc('owner_kirim_pengumuman', { p_judul: judul, p_isi: el('uIsi').value.trim() });
+  if (error) return tampilU(error.message, 'galat');
+  el('uJudul').value = '';
+  el('uIsi').value = '';
+  tampilU('Pengumuman terkirim.', 'ok');
+  muatUmum();
+}
+
 /* ---------- klik ---------- */
 app.onclick = async (e) => {
   const b = e.target.closest('button');
   if (!b) return;
   if (b.id === 'keluar') { await db.auth.signOut(); return location.replace('/masuk'); }
   if (b.id === 'ajukanUlang') return tampilForm(toko);
+  if (b.dataset.hapusu) {
+  if (!confirm('Hapus pengumuman ini? Pengumuman hilang dari lonceng pembeli.')) return;
+  const { error } = await db.rpc('owner_hapus_pengumuman', { p_id: b.dataset.hapusu });
+  if (error) return alert(error.message);
+  return muatUmum();
+  }
   if (b.dataset.nav) { halaman += Number(b.dataset.nav); return muatMember(); }
   if (b.id === 'bKasir') {
     const { data, error } = await db.rpc('owner_token_kasir', { p_toko_id: toko.id });
