@@ -46,7 +46,7 @@ const el = id => document.getElementById(id);
 
   const { data: profil, error } = await db
     .from('profiles')
-    .select('nama, username, id_unik')
+    .select('nama, username, id_unik, peran')
     .eq('id', data.session.user.id)
     .single();
 
@@ -54,6 +54,8 @@ const el = id => document.getElementById(id);
     el('nama').textContent = 'Profil belum tersedia';
     return;
   }
+  if (profil.peran === 'admin') return location.replace('/admin');
+  if (profil.peran === 'owner') return location.replace('/owner');
   el('nama').textContent = profil.nama;
   el('username').textContent = profil.username;
   el('idunik').textContent = profil.id_unik.slice(0, 4) + ' ' + profil.id_unik.slice(4);

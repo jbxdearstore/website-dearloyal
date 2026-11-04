@@ -564,7 +564,8 @@ app.onclick = async (e) => {
 async function muat() {
   const { data: s } = await db.auth.getSession();
   if (!s.session) return location.replace('/masuk?next=' + encodeURIComponent('/owner'));
-  const { data: p } = await db.from('profiles').select('diblokir_toko').eq('id', s.session.user.id).single();
+  const { data: p } = await db.from('profiles').select('diblokir_toko, peran').eq('id', s.session.user.id).single();
+  if (p && p.peran === 'admin') return location.replace('/admin');
   diblokir = !!(p && p.diblokir_toko);
   const { data, error } = await db.rpc('toko_saya');
   if (error) {
