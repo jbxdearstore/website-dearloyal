@@ -190,3 +190,7 @@ textarea:focus{outline:none;border-color:var(--utama);box-shadow:0 0 0 3px rgba(
 .lonceng-item b{display:block;margin-bottom:2px}
 .lonceng-item .redup{font-size:12px;margin-top:4px}
 .lonceng-kosong{padding:24px 16px;text-align:center;color:var(--redup);font-size:14px}
+
+@media (min-width:640px){
+  .lonceng-panel{position:absolute;top:48px;left:auto;right:0;width:340px;margin-left:0}
+}
