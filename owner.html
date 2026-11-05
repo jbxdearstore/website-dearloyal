@@ -275,11 +275,10 @@ function pasangPengaturan() {
   const pratinjau = () => {
     const n = Number(jumlah.value);
     const isi = Math.min(3, n);
-    el('pratinjau').innerHTML =
-      '<div class="kt" style="--w:' + warna + '"><div class="kt-atas"><strong>' + esc(toko.nama) +
-      '</strong><span>' + isi + '/' + n + '</span></div>' +
-      htmlStempel(isi, n, ikon.value) +
-      '<div class="kt-info">Kumpulkan ' + (n - isi) + ' stempel lagi untuk: ' + esc(hadiah.value || '-') + '</div></div>';
+    el('pratinjau').innerHTML = kartuDesain({
+      nama: toko.nama, logo: toko.logo_path, warna: warna, ikon: ikon.value,
+      isi: isi, target: n, hadiah: hadiah.value, desain: toko.desain
+    }) + '<div class="kd-info">Kumpulkan ' + (n - isi) + ' stempel lagi untuk: ' + esc(hadiah.value || '-') + '</div>';
   };
   pilihSw(); pratinjau();
 
@@ -407,10 +406,10 @@ function wizFrame(isi) {
 }
 
 function wizKartu(isi, n) {
-  return '<div class="pratinjau"><div class="kt" style="--w:' + wz.warna + '">' +
-    '<div class="kt-atas"><strong>' + esc(toko.nama) + '</strong><span>' + isi + '/' + n + '</span></div>' +
-    htmlStempel(isi, n, wz.ikon) +
-    '<div class="kt-info">Kumpulkan ' + (n - isi) + ' stempel lagi untuk: ' + esc(wz.hadiah || '-') + '</div></div></div>';
+  return '<div class="pratinjau">' + kartuDesain({
+    nama: toko.nama, logo: toko.logo_path, warna: wz.warna, ikon: wz.ikon,
+    isi: isi, target: n, hadiah: wz.hadiah, desain: toko.desain
+  }) + '<div class="kd-info">Kumpulkan ' + (n - isi) + ' stempel lagi untuk: ' + esc(wz.hadiah || '-') + '</div></div>';
 }
 
 function tampilWizard() {
