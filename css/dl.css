@@ -201,3 +201,28 @@ textarea:focus{outline:none;border-color:var(--utama);box-shadow:0 0 0 3px rgba(
 .lonceng-label.dl{background:var(--utama)}
 .lonceng-item{word-break:break-word}
 .lonceng-item a{color:var(--utama);word-break:break-all}
+
+/* ---------- kartu ukuran tetap 8:5 ---------- */
+.kd-bungkus{display:block;text-decoration:none;color:inherit;animation:muncul .5s ease both;transition:transform .15s}
+a.kd-bungkus:active{transform:scale(.985)}
+.kd-bungkus.mati .kd{filter:grayscale(1);opacity:.7}
+.kd-info{margin-top:8px;font-size:13px;color:var(--redup);text-align:center}
+.kd{container-type:inline-size;position:relative;width:100%;aspect-ratio:8/5;border-radius:20px;
+  overflow:hidden;background:var(--bg);color:var(--tx);box-shadow:0 10px 24px rgba(15,23,42,.14);
+  --dmaks:17cqw}
+.kd.ada-hadiah{--dmaks:14.5cqw}
+.kd-isi{position:absolute;inset:0;padding:5cqw;display:grid;grid-template-rows:auto 1fr auto;min-height:0}
+.kd-atas{display:flex;align-items:center;justify-content:space-between;gap:3cqw;font-size:4.8cqw;min-height:8cqw}
+.kd-nama{display:flex;align-items:center;gap:2.5cqw;min-width:0;font-weight:700}
+.kd-nama span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kd-nama img{width:8cqw !important;height:8cqw !important;border-radius:2cqw !important;flex:none}
+.kd-jml{margin-left:auto;font-weight:600;font-size:4.4cqw;white-space:nowrap}
+.kd-grid{display:grid;grid-template-columns:repeat(var(--k),var(--d));gap:2.2cqw;
+  justify-content:center;align-content:center;
+  --d:min(calc((90cqw - (var(--k) - 1) * 2.2cqw) / var(--k)),var(--dmaks))}
+.kd-st{width:var(--d);height:var(--d);border-radius:50%;display:grid;place-items:center;
+  border:max(1.5px,.7cqw) solid var(--gr);font-size:calc(var(--d) * .38);color:var(--an);
+  animation:muncul .4s ease both}
+.kd-st.isi{background:var(--si);color:var(--ik);animation:cap .45s cubic-bezier(.2,1.4,.4,1) both}
+.kd-st svg{width:58%;height:58%}
+.kd-hadiah{font-size:3.7cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:5cqw}
