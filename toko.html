@@ -53,10 +53,10 @@ function halamanToko(t, sudahMasuk) {
   (t.logo_path ? '<div style="margin-bottom:10px">' + htmlLogo(t.logo_path, 72, t.nama) + '</div>' : '') +
     '<h1 class="merek" style="color:' + w + '">' + esc(t.nama) + '</h1>' +
     '<p class="sub">Kartu stempel digital</p>' +
-    '<div class="kt" style="--w:' + w + ';text-align:left">' +
-      '<div class="kt-atas"><strong>' + esc(t.nama) + '</strong><span>0/' + t.jumlah_stempel + '</span></div>' +
-      htmlStempel(0, t.jumlah_stempel, t.ikon) +
-    '</div>' +
+    '<div style="text-align:left;margin-bottom:16px">' + kartuDesain({
+      nama: t.nama, logo: t.logo_path, warna: t.warna, ikon: t.ikon,
+      isi: 0, target: t.jumlah_stempel, hadiah: t.teks_hadiah, desain: t.desain
+    }) + '</div>' +
     '<div class="hadiah">Kumpulkan ' + t.jumlah_stempel + ' stempel, dapatkan <strong>' +
       esc(t.teks_hadiah) + '</strong></div>' +
     (t.syarat_hadiah ? '<p class="sub" style="margin-top:-6px">' + esc(t.syarat_hadiah) + '</p>' : '') +
