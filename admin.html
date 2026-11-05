@@ -105,6 +105,12 @@ function render() {
       (wa ? '<div class="meta"><a href="' + wa + '" target="_blank" rel="noopener">Hubungi WhatsApp</a></div>' : '') +
       (t.alasan_internal ? '<div class="meta">Alasan nonaktif: ' + esc(t.alasan_internal) + '</div>' : '') +
       (t.alasan_tolak ? '<div class="meta">Alasan tolak: ' + esc(t.alasan_tolak) + '</div>' : '') +
+            ((t.status === 'aktif' || t.status === 'nonaktif')
+        ? '<div class="meta" style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+          '<span>Pro · Gambar latar kartu: <strong>' +
+          ((t.fitur_pro || []).includes('gambar_kartu') ? 'Aktif' : 'Mati') + '</strong></span>' +
+          '<button type="button" class="tombol putih kecil" data-pro="gambar_kartu" data-id="' + t.id + '">' +
+          ((t.fitur_pro || []).includes('gambar_kartu') ? 'Matikan' : 'Nyalakan') + '</button></div>' : '') +
       (aksi ? '<div class="aksi">' + aksi + '</div>' : '') + '</div>';
   }).join('');
 
@@ -328,6 +334,16 @@ app.onclick = async (e) => {
   if (!b) return;
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
   if (b.id === 'bPulih') return pulihkan();
+    if (b.dataset.pro) {
+    const t = semua.find(x => x.id === b.dataset.id);
+    const nyala = !((t && t.fitur_pro) || []).includes(b.dataset.pro);
+    if (!confirm((nyala ? 'Nyalakan' : 'Matikan') + ' fitur Pro "Gambar latar kartu" untuk ' +
+      (t ? t.nama : 'toko ini') + '?')) return;
+    const { error } = await db.rpc('admin_atur_fitur',
+      { p_toko_id: b.dataset.id, p_fitur: b.dataset.pro, p_aktif: nyala });
+    if (error) return alert(error.message);
+    return muat();
+    }
   if (b.id === 'bKirimP') return kirimPengumuman();
   if (b.dataset.hapusp) {
     if (!confirm('Hapus pengumuman ini? Pengumuman hilang dari lonceng semua orang.')) return;
