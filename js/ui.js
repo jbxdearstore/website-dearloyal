@@ -75,10 +75,12 @@ function svgIkon(kunci) {
 
 function latarKartu(w, d) {
   const g = d.gaya || 'solid';
-  if (g === 'gradasi') return 'linear-gradient(135deg,' + w + ',color-mix(in srgb,' + w + ' 65%,#000))';
+  if (g === 'right') return 'linear-gradient(135deg,' + w + ',color-mix(in srgb,' + w + ' 65%,#000))';
+  if (g === 'left') return 'linear-gradient(225deg,' + w + ',color-mix(in srgb,' + w + ' 65%,#000))';
   if (g === 'vertikal') return 'linear-gradient(180deg,color-mix(in srgb,' + w + ' 85%,#fff),color-mix(in srgb,' + w + ' 70%,#000))';
-  if (g === 'sorotan') return 'radial-gradient(circle at 15% 0%,color-mix(in srgb,' + w + ' 70%,#fff),' + w + ' 45%,color-mix(in srgb,' + w + ' 55%,#000))';
-  if (g === 'dua') return 'linear-gradient(135deg,' + w + ',' + (d.w_latar2 ? warnaAman(d.w_latar2) : '#7c3aed') + ')';
+  if (g === 'horizontal') return 'linear-gradient(0deg,color-mix(in srgb,' + w + ' 85%,#fff),color-mix(in srgb,' + w + ' 70%,#000))';
+  if (g === 'highlight') return 'radial-gradient(circle at 15% 0%,color-mix(in srgb,' + w + ' 70%,#fff),' + w + ' 45%,color-mix(in srgb,' + w + ' 55%,#000))';
+  if (g === 'gradient') return 'linear-gradient(135deg,' + w + ',' + (d.w_latar2 ? warnaAman(d.w_latar2) : '#7c3aed') + ')';
   return w;
 }
 
