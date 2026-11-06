@@ -73,16 +73,24 @@ function svgIkon(kunci) {
   return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' + d + '"/></svg>';
 }
 
+function latarKartu(w, d) {
+  const g = d.gaya || 'solid';
+  if (g === 'gradasi') return 'linear-gradient(135deg,' + w + ',color-mix(in srgb,' + w + ' 65%,#000))';
+  if (g === 'vertikal') return 'linear-gradient(180deg,color-mix(in srgb,' + w + ' 85%,#fff),color-mix(in srgb,' + w + ' 70%,#000))';
+  if (g === 'sorotan') return 'radial-gradient(circle at 15% 0%,color-mix(in srgb,' + w + ' 70%,#fff),' + w + ' 45%,color-mix(in srgb,' + w + ' 55%,#000))';
+  if (g === 'dua') return 'linear-gradient(135deg,' + w + ',' + (d.w_latar2 ? warnaAman(d.w_latar2) : '#7c3aed') + ')';
+  return w;
+}
+
 function gayaKartu(warna, d) {
   d = d || {};
   const w = warnaAman(warna);
-  const wl = d.w_latar ? warnaAman(d.w_latar) : null;
   const teks = d.w_teks ? warnaAman(d.w_teks) : '#ffffff';
   const terisi = d.w_terisi ? warnaAman(d.w_terisi) : '#ffffff';
-  const ikon = d.w_ikon ? warnaAman(d.w_ikon) : (wl || w);
+  const ikon = d.w_ikon ? warnaAman(d.w_ikon) : w;
   const garis = d.w_garis ? warnaAman(d.w_garis) : terisi;
   const angka = d.w_angka ? warnaAman(d.w_angka) : teks;
-  const bg = wl || ('linear-gradient(135deg,' + w + ',color-mix(in srgb,' + w + ' 65%,#000))');
+  const bg = latarKartu(w, d);
   return '--bg:' + bg + ';--tx:' + teks + ';--si:' + terisi + ';--ik:' + ikon +
          ';--gr:' + garis + ';--an:' + angka;
 }
