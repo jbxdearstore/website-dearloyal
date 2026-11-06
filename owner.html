@@ -153,6 +153,13 @@ function tampilDash() {
       '<button type="button" id="bHapusLogo" class="tombol merah kecil">Hapus logo</button></div>' +
       '<div class="redup" style="margin-top:8px">Gambar otomatis dikecilkan. Logo tampil di kartu pembeli dan halaman toko.</div>' +
       '<div id="pesanLogo" class="pesan"></div></div>' +
+      '<div class="sec"><h3>Desain kartu</h3>' +
+      '<div class="pratinjau" id="pratinjauDesain"></div>' +
+      '<div id="kolomWarna"></div>' +
+      '<div class="redup" style="margin-bottom:12px">Kolom kosong berarti memakai warna bawaan. Latar kartu yang kosong memakai warna kartu dari Pengaturan toko (bergradasi).</div>' +
+      '<div class="baris-aksi"><button type="button" id="bSimpanDesain" class="tombol kecil" style="width:auto">Simpan desain</button>' +
+      '<button type="button" id="bResetDesain" class="tombol putih kecil">Kembalikan ke bawaan</button></div>' +
+      '<div id="pesanDesain" class="pesan"></div></div>' +
       '<div class="sec"><h3>Pengaturan toko</h3>' +
       '<div class="pratinjau" id="pratinjau"></div>' +
       '<form id="fSet" novalidate>' +
@@ -215,6 +222,7 @@ function tampilDash() {
 
   pasangPengaturan();
   pasangLogo();
+  pasangDesain();
   muatRingkasan();
   muatMember();
 }
@@ -359,6 +367,91 @@ async function unggahLogo(file) {
   const lama = toko.logo_path;
   toko.logo_path = path;
   if (lama && lama !== path) await db.storage.from('logo').remove([lama]);
+}
+
+/* ---------- desain kartu ---------- */
+let dz = {};
+const BAGIAN_WARNA = [
+  ['w_latar', 'Latar kartu'], ['w_teks', 'Teks'], ['w_terisi', 'Stempel terisi'],
+  ['w_ikon', 'Ikon stempel'], ['w_garis', 'Garis lingkaran'], ['w_angka', 'Angka di stempel kosong']
+];
+
+function bawaanWarna(d) {
+  const w = warnaAman(toko.warna);
+  return { w_latar: w, w_teks: '#ffffff', w_terisi: '#ffffff',
+           w_ikon: d.w_latar || w, w_garis: d.w_terisi || '#ffffff', w_angka: d.w_teks || '#ffffff' };
+}
+
+function gambarKolomWarna() {
+  const b = bawaanWarna(dz);
+  el('kolomWarna').innerHTML = BAGIAN_WARNA.map(([k, nama]) =>
+    '<div class="baris"><label for="h_' + k + '">' + nama + '</label>' +
+    '<div style="display:flex;gap:8px;align-items:center">' +
+    '<input type="color" id="c_' + k + '" data-k="' + k + '" value="' + (dz[k] || b[k]) +
+      '" style="width:48px;height:44px;padding:2px;flex:none">' +
+    '<input id="h_' + k + '" data-k="' + k + '" maxlength="7" placeholder="' + b[k] + '" value="' + (dz[k] || '') +
+      '" autocapitalize="characters" autocomplete="off" spellcheck="false">' +
+    '<button type="button" class="tombol putih kecil" data-kosong="' + k + '" aria-label="Pakai bawaan">×</button>' +
+    '</div></div>').join('');
+}
+
+function segarkanDesain() {
+  const b = bawaanWarna(dz);
+  BAGIAN_WARNA.forEach(([k]) => {
+    el('h_' + k).placeholder = b[k];
+    if (!dz[k]) el('c_' + k).value = b[k];
+  });
+  el('pratinjauDesain').innerHTML = kartuDesain({
+    nama: toko.nama, logo: toko.logo_path, warna: toko.warna, ikon: toko.ikon,
+    isi: Math.min(3, toko.jumlah_stempel), target: toko.jumlah_stempel,
+    hadiah: toko.teks_hadiah, desain: dz
+  });
+}
+
+async function simpanDesain() {
+  const p = el('pesanDesain');
+  const { data, error } = await db.rpc('simpan_desain', { p_toko_id: toko.id, p_desain: dz });
+  if (error) { p.textContent = error.message; p.className = 'pesan tampil galat'; return false; }
+  toko.desain = data;
+  dz = JSON.parse(JSON.stringify(data));
+  p.textContent = 'Desain disimpan.';
+  p.className = 'pesan tampil ok';
+  return true;
+}
+
+function pasangDesain() {
+  dz = JSON.parse(JSON.stringify(toko.desain || {}));
+  gambarKolomWarna();
+  segarkanDesain();
+
+  el('kolomWarna').oninput = (e) => {
+    const k = e.target.dataset.k;
+    if (!k) return;
+    if (e.target.type === 'color') {
+      dz[k] = e.target.value.toLowerCase();
+      el('h_' + k).value = dz[k];
+    } else {
+      let v = e.target.value.trim();
+      if (v && v[0] !== '#') v = '#' + v;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { dz[k] = v.toLowerCase(); el('c_' + k).value = dz[k]; }
+      else if (v === '' || v === '#') delete dz[k];
+      else return;
+    }
+    segarkanDesain();
+  };
+  el('kolomWarna').onclick = (e) => {
+    const b = e.target.closest('[data-kosong]');
+    if (!b) return;
+    delete dz[b.dataset.kosong];
+    el('h_' + b.dataset.kosong).value = '';
+    segarkanDesain();
+  };
+  el('bSimpanDesain').onclick = simpanDesain;
+  el('bResetDesain').onclick = async () => {
+    if (!confirm('Kembalikan seluruh desain kartu ke bawaan?')) return;
+    dz = {};
+    if (await simpanDesain()) { gambarKolomWarna(); segarkanDesain(); }
+  };
 }
 
 function pasangLogo() {
