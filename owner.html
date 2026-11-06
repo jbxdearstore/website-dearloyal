@@ -156,7 +156,7 @@ function tampilDash() {
       '<div class="sec"><h3>Desain kartu</h3>' +
       '<div class="pratinjau" id="pratinjauDesain"></div>' +
       '<div id="blokWarna"></div><div id="kolomWarna"></div>' +
-      '<div class="redup" style="margin-bottom:12px">Kolom kosong berarti memakai warna bawaan. Latar kartu yang kosong memakai warna kartu dari Pengaturan toko (bergradasi).</div>' +
+      '<div class="redup" style="margin-bottom:12px">Kolom kosong berarti memakai warna bawaan. Warna kartu dan gaya latar diatur di bagian atas.</div>' +
       '<div class="baris-aksi"><button type="button" id="bSimpanDesain" class="tombol kecil" style="width:auto">Simpan desain</button>' +
       '<button type="button" id="bResetDesain" class="tombol putih kecil">Kembalikan ke bawaan</button></div>' +
       '<div id="pesanDesain" class="pesan"></div></div>' +
@@ -277,7 +277,7 @@ function pasangPengaturan() {
     const n = Number(jumlah.value);
     const isi = Math.min(3, n);
     el('pratinjau').innerHTML = kartuDesain({
-      nama: toko.nama, logo: toko.logo_path, warna: warna, ikon: ikon.value,
+      nama: toko.nama, logo: toko.logo_path, warna: toko.warna, ikon: ikon.value,
       isi: isi, target: n, hadiah: hadiah.value, desain: toko.desain
     }) + '<div class="kd-info">Kumpulkan ' + (n - isi) + ' stempel lagi untuk: ' + esc(hadiah.value || '-') + '</div>';
   };
@@ -303,7 +303,7 @@ function pasangPengaturan() {
     const { error } = await db.rpc('ubah_pengaturan_toko', {
       p_toko_id: toko.id,
       p_data: {
-        warna: warna, ikon: ikon.value, jumlah_stempel: baruJumlah, teks_hadiah: teks,
+        warna: toko.warna, ikon: ikon.value, jumlah_stempel: baruJumlah, teks_hadiah: teks,
         syarat_hadiah: el('sSyarat').value, instagram: el('sIg').value.trim(),
         jeda_menit: Number(jeda.value)
       }
@@ -313,7 +313,7 @@ function pasangPengaturan() {
       p.className = 'pesan tampil galat';
       return;
     }
-    toko.warna = warna; toko.ikon = ikon.value; toko.jumlah_stempel = baruJumlah;
+    toko.ikon = ikon.value; toko.jumlah_stempel = baruJumlah;
     toko.teks_hadiah = teks; toko.syarat_hadiah = el('sSyarat').value;
     toko.instagram = el('sIg').value.trim(); toko.jeda_menit = Number(jeda.value);
     p.textContent = 'Pengaturan disimpan.';
