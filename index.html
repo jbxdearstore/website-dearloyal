@@ -64,11 +64,7 @@
       </div>
     </div>
     <div class="demo melayang">
-      <div class="kt" id="demoKartu" style="--w:#b45309">
-        <div class="kt-atas"><strong>Kopi Demo</strong><span id="demoHitung">0/8</span></div>
-        <div id="demoStempel"></div>
-        <div class="kt-info">Kumpulkan 8 stempel untuk: Gratis 1 kopi susu</div>
-      </div>
+      <div id="demoKartu"></!div>
     </div>
   </div>
 
@@ -176,16 +172,19 @@
 /* kartu contoh: stempel terisi satu per satu */
 (function () {
   const total = 8;
-  const box = document.getElementById('demoStempel');
-  const hitung = document.getElementById('demoHitung');
-  box.innerHTML = htmlStempel(0, total, 'bintang');
-  const bulat = box.querySelectorAll('.st');
+  const kartu = document.getElementById('demoKartu');
+  kartu.innerHTML = kartuDesain({
+    nama: 'Kopi Demo', warna: '#b45309', ikon: 'kopi', isi: 0, target: total,
+    hadiah: 'Gratis 1 kopi susu', desain: { tampil: { hadiah: true } }
+  });
+  const bulat = kartu.querySelectorAll('.kd-st');
+  const hitung = kartu.querySelector('.kd-jml');
   const kurang = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   let n = 0;
 
   function atur(k) {
     bulat.forEach((b, i) => {
-      if (i < k) { b.classList.add('isi'); b.textContent = IKON.bintang; }
+      if (i < k) { b.classList.add('isi'); b.innerHTML = svgIkon('kopi'); }
       else { b.classList.remove('isi'); b.textContent = String(i + 1); }
     });
     hitung.textContent = k + '/' + total;

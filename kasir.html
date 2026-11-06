@@ -170,10 +170,11 @@ function tampilHasil() {
     '<h2>' + esc(c.nama) + '</h2>' +
     '<div class="redup">@' + esc(c.username) + ' · ID ' + formatId(c.id_unik) + '</div>' +
     (c.punya_kartu ? '' : '<div class="redup" style="margin-top:6px">Belum punya kartu di toko ini. Kartu dibuat saat stempel pertama.</div>') +
-    '<div class="kt" style="--w:' + w + ';margin-top:14px">' +
-      '<div class="kt-atas"><strong>Kartu #' + c.nomor_kartu + '</strong><span>' +
-      c.jumlah_stempel + '/' + c.target_stempel + '</span></div>' +
-      htmlStempel(c.jumlah_stempel, c.target_stempel, toko.ikon) + '</div>' +
+    '<div style="margin-top:14px">' + kartuDesain({
+      nama: 'Kartu #' + c.nomor_kartu, warna: toko.warna, ikon: toko.ikon,
+      isi: c.jumlah_stempel, target: c.target_stempel,
+      desain: Object.assign({}, toko.desain || {}, { tampil: { nama: true, jumlah: true, logo: false, hadiah: false } })
+    }) + '</div>' +
     '<div class="aksi">' + aksi + '</div></div>';
 
   if (el('bStempel')) el('bStempel').onclick = stempel;
