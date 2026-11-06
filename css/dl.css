@@ -226,3 +226,5 @@ a.kd-bungkus:active{transform:scale(.985)}
 .kd-st.isi{background:var(--si);color:var(--ik);animation:cap .45s cubic-bezier(.2,1.4,.4,1) both}
 .kd-st svg{width:58%;height:58%}
 .kd-hadiah{font-size:3.7cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:5cqw}
+
+.chip.aktif{background:var(--utama);color:#fff;border-color:var(--utama)}
