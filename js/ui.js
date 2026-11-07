@@ -116,6 +116,15 @@ function gayaKartu(warna, d) {
          ';--gr:' + garis + ';--an:' + angka;
 }
 
+function urlLatar(p) { return DL.SUPABASE_URL + '/storage/v1/object/public/latar/' + encodeURI(p); }
+
+function htmlLatar(l) {
+  if (!l || typeof l.p !== 'string' || !/^[0-9a-f-]{36}\/latar-[0-9]{1,16}\.webp$/.test(l.p)) return '';
+  const n = (v, lo, hi, def) => Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : def;
+  return '<img class="kd-latar" alt="" draggable="false" src="' + esc(urlLatar(l.p)) + '" style="width:' +
+    n(l.w, 100, 1000, 100) + '%;left:' + n(l.l, -1000, 0, 0) + '%;top:' + n(l.t, -1000, 0, 0) + '%">';
+}
+
 function kartuDesain(o) {
   const d = o.desain || {};
   const t = d.tampil || {};
@@ -135,6 +144,7 @@ function kartuDesain(o) {
   const logo = (nampak('logo') && o.logo) ? htmlLogo(o.logo, 28, o.nama) : '';
   const nama = nampak('nama') ? '<span>' + esc(o.nama) + '</span>' : '';
   return '<div class="kd' + (hadiah ? ' ada-hadiah' : '') + '" style="' + gayaKartu(o.warna, d) + '">' +
+    htmlLatar(d.latar) +
     '<div class="kd-isi">' +
       '<div class="kd-atas"><div class="kd-nama">' + logo + nama + '</div>' +
         (nampak('jumlah') ? '<div class="kd-jml">' + o.isi + '/' + target + '</div>' : '') + '</div>' +
