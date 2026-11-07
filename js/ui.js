@@ -68,7 +68,20 @@ const IKON_SVG = {
   permata: 'M6 3h12l4 6-10 13L2 9l4-6z'
 };
 
-function svgIkon(kunci) {
+const RE_ISI_IKON = /^(<(path|circle|rect|ellipse|polygon|polyline|line)( (d|cx|cy|r|rx|ry|x|y|x1|y1|x2|y2|width|height|points|transform|fill|fill-rule|clip-rule|stroke|stroke-width|stroke-linecap|stroke-linejoin|stroke-miterlimit|opacity|fill-opacity|stroke-opacity)="[0-9A-Za-z .,()#%+-]*")*\/>)+$/;
+const RE_VB = /^-?\d+(\.\d+)? -?\d+(\.\d+)? \d+(\.\d+)? \d+(\.\d+)?$/;
+
+function svgKustom(k) {
+  if (!k || typeof k.isi !== 'string' || typeof k.vb !== 'string') return null;
+  if (k.isi.length > 4096 || !RE_VB.test(k.vb) || !RE_ISI_IKON.test(k.isi)) return null;
+  if (/url\(/i.test(k.isi) || / (fill|stroke)="(?!none"|currentColor")/.test(k.isi)) return null;
+  return '<svg viewBox="' + k.vb + '" fill="currentColor" aria-hidden="true">' + k.isi + '</svg>';
+}
+
+function svgIkon(kunci, kustom) {
+  if (typeof kunci === 'string' && /^c:[0-9]+$/.test(kunci)) {
+    return svgKustom(kustom) || svgIkon('bintang');
+  }
   const d = IKON_SVG[kunci] || IKON_SVG.bintang;
   return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' + d + '"/></svg>';
 }
@@ -114,7 +127,7 @@ function kartuDesain(o) {
   for (let i = 1; i <= target; i++) {
     const isi = i <= o.isi;
     st += '<span class="kd-st' + (isi ? ' isi' : '') + '" style="animation-delay:' + (i * 40) + 'ms">' +
-          (isi ? svgIkon(o.ikon) : i) + '</span>';
+          (isi ? svgIkon(o.ikon, d.ikon_kustom) : i) + '</span>';
   }
   const sisa = Math.max(target - o.isi, 0);
   const teksHadiah = sisa === 0 ? 'Kartu penuh! Klaim hadiahmu di kasir.'
