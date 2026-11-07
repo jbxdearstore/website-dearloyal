@@ -164,7 +164,19 @@ function tampilDash() {
       '<div class="sec"><h3>Pengaturan toko</h3>' +
       '<div class="pratinjau" id="pratinjau"></div>' +
       '<form id="fSet" novalidate>' +
-      '<div class="baris"><label>Ikon stempel</label><input type="hidden" id="sIkon"><div id="gridIkon"></div></div>' +
+      '<div class="baris"><label>Ikon stempel</label><input type="hidden" id="sIkon"><div id="gridIkon"></div>' +
+      '<div id="tambahIkon" style="display:none">' +
+        '<div class="ik-judul redup"><span id="infoKustom"></span></div>' +
+        '<button type="button" id="bBukaTambah" class="tombol putih kecil" style="width:auto">+ Tambah ikon SVG</button>' +
+        '<div id="formTambah" style="display:none">' +
+          '<textarea id="kodeSvg" rows="6" placeholder="Tempel kode SVG di sini" spellcheck="false" autocapitalize="none" autocomplete="off"></textarea>' +
+          '<div class="redup" style="margin:8px 0 4px">Pratinjau</div>' +
+          '<div id="pratinjauSvg" class="ik-pilih" style="width:64px;height:64px;cursor:default"></div>' +
+          '<div class="baris-aksi"><button type="button" id="bSimpanIkon" class="tombol kecil" style="width:auto" disabled>Simpan ikon</button>' +
+          '<button type="button" id="bBatalIkon" class="tombol putih kecil" style="width:auto">Batal</button></div>' +
+        '</div>' +
+        '<div id="pesanTambah" class="pesan"></div>' +
+      '</div></div>' +
       '<div class="baris"><label for="sJumlah">Jumlah stempel</label><select id="sJumlah">' +
         [6, 8, 10, 12].map(n => '<option value="' + n + '">' + n + '</option>').join('') + '</select></div>' +
       '</div>' +
@@ -298,6 +310,13 @@ function gambarPilihIkon() {
         aksi('pulih', k, IKON_MATA, 'Tampilkan ikon') + '</div>').join('') + '</div>';
   }
   box.innerHTML = h;
+  const t = el('tambahIkon');
+  if (t) {
+    t.style.display = aturIkon ? 'block' : 'none';
+    const n = pustaka.kustom.length;
+    el('infoKustom').textContent = 'Ikon buatanmu (' + n + ' dari 10)';
+    el('bBukaTambah').style.display = (n >= 10 || el('formTambah').style.display !== 'none') ? 'none' : '';
+  }
 }
 
 function pilihIkon(k) {
@@ -363,6 +382,118 @@ async function muatPustakaIkon() {
   segarkanDesain();
 }
 
+const SVG_BENTUK = ['path', 'circle', 'rect', 'ellipse', 'polygon', 'polyline', 'line'];
+const SVG_ATRIB = ['d', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'points', 'opacity'];
+const SVG_WARIS = ['fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit',
+                   'fill-rule', 'clip-rule', 'fill-opacity', 'stroke-opacity'];
+const SVG_NILAI = /^[0-9A-Za-z .,()#%+-]*$/;
+
+function bacaGaya(node) {
+  const o = {};
+  SVG_WARIS.forEach(k => { if (node.hasAttribute(k)) o[k] = node.getAttribute(k).trim(); });
+  (node.getAttribute('style') || '').split(';').forEach(s => {
+    const i = s.indexOf(':');
+    if (i < 0) return;
+    const k = s.slice(0, i).trim().toLowerCase();
+    if (SVG_WARIS.includes(k)) o[k] = s.slice(i + 1).trim();
+  });
+  return o;
+}
+
+function bersihkanSvg(teks) {
+  teks = String(teks || '').trim();
+  if (teks.length > 60000) throw new Error('Kode SVG terlalu panjang.');
+  const doc = new DOMParser().parseFromString(teks, 'image/svg+xml');
+  const root = doc.documentElement;
+  if (doc.getElementsByTagName('parsererror').length || !root || root.localName !== 'svg') {
+    throw new Error('Kode SVG tidak valid. Pastikan seluruh kode dari <svg> sampai </svg> ikut tertempel.');
+  }
+  let vb = null;
+  const v = (root.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+  if (v.length === 4 && v.every(Number.isFinite) && v[2] > 0 && v[3] > 0) vb = v;
+  else {
+    const w = parseFloat(root.getAttribute('width')), h = parseFloat(root.getAttribute('height'));
+    if (w > 0 && h > 0) vb = [0, 0, w, h];
+  }
+  if (!vb) throw new Error('SVG harus punya viewBox, contoh viewBox="0 0 24 24".');
+
+  const hasil = [];
+  const jalan = (node, waris, tf) => {
+    for (const c of node.children) {
+      const nama = c.localName;
+      const tfc = [tf, (c.getAttribute('transform') || '').trim()].filter(Boolean).join(' ').replace(/\s+/g, ' ');
+      if (nama === 'g') {
+        jalan(c, Object.assign({}, waris, bacaGaya(c)), tfc);
+      } else if (SVG_BENTUK.includes(nama)) {
+        const g = Object.assign({}, waris, bacaGaya(c));
+        let s = '<' + nama;
+        SVG_ATRIB.forEach(k => {
+          if (!c.hasAttribute(k)) return;
+          const nilai = c.getAttribute(k).replace(/\s+/g, ' ').trim();
+          if (SVG_NILAI.test(nilai)) s += ' ' + k + '="' + nilai + '"';
+        });
+        if (tfc && SVG_NILAI.test(tfc)) s += ' transform="' + tfc + '"';
+        if ((g.fill || 'black').toLowerCase() === 'none') s += ' fill="none"';
+        ['fill-rule', 'clip-rule', 'fill-opacity'].forEach(k => {
+          if (g[k] && SVG_NILAI.test(g[k])) s += ' ' + k + '="' + g[k] + '"';
+        });
+        if (g.stroke && g.stroke.toLowerCase() !== 'none') {
+          s += ' stroke="currentColor"';
+          ['stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity'].forEach(k => {
+            if (g[k] && SVG_NILAI.test(g[k])) s += ' ' + k + '="' + g[k] + '"';
+          });
+        }
+        hasil.push(s + '/>');
+      }
+    }
+  };
+  jalan(root, bacaGaya(root), '');
+
+  if (!hasil.length) throw new Error('Tidak ada bentuk gambar yang bisa dipakai. Pakai ikon yang tersusun dari path, lingkaran, atau kotak.');
+  if (hasil.length > 80) throw new Error('Ikon terlalu rumit. Pakai ikon yang lebih sederhana.');
+  const r = { vb: vb.map(n => Math.round(n * 1000) / 1000).join(' '), isi: hasil.join('') };
+  if (r.isi.length > 4096) throw new Error('Ikon terlalu rumit (maksimal 4 KB). Pakai ikon yang lebih sederhana.');
+  if (!svgKustom(r)) throw new Error('Ikon tidak lolos pemeriksaan keamanan. Coba ikon lain.');
+  return r;
+}
+
+function pasangTambahIkon() {
+  let draf = null;
+  const info = (t, j) => {
+    const p = el('pesanTambah');
+    p.textContent = t || '';
+    p.className = t ? 'pesan tampil ' + j : 'pesan';
+  };
+  const buka = (b) => { el('formTambah').style.display = b ? 'block' : 'none'; gambarPilihIkon(); };
+  const periksa = () => {
+    draf = null;
+    el('pratinjauSvg').innerHTML = '';
+    el('bSimpanIkon').disabled = true;
+    if (!el('kodeSvg').value.trim()) return info('');
+    try {
+      draf = bersihkanSvg(el('kodeSvg').value);
+      el('pratinjauSvg').style.color = dz.w_ikon || wk;
+      el('pratinjauSvg').innerHTML = svgKustom(draf) || '';
+      el('bSimpanIkon').disabled = false;
+      info('');
+    } catch (e) { info(e.message, 'galat'); }
+  };
+  el('bBukaTambah').onclick = () => { info(''); buka(true); el('kodeSvg').focus(); };
+  el('bBatalIkon').onclick = () => { el('kodeSvg').value = ''; periksa(); buka(false); };
+  el('kodeSvg').oninput = periksa;
+  el('bSimpanIkon').onclick = async () => {
+    if (!draf) return;
+    el('bSimpanIkon').disabled = true;
+    const { data, error } = await db.rpc('tambah_ikon_toko', { p_toko_id: toko.id, p_vb: draf.vb, p_isi: draf.isi });
+    if (error) { el('bSimpanIkon').disabled = false; return info(error.message, 'galat'); }
+    pustaka.kustom.push(data);
+    el('kodeSvg').value = '';
+    periksa();
+    buka(false);
+    info('Ikon disimpan. Ketuk ikonnya di daftar untuk memakainya.', 'ok');
+  };
+}
+
 function pasangPengaturan() {
   const ikon = el('sIkon'), jumlah = el('sJumlah'), hadiah = el('sHadiah'), jeda = el('sJeda');
 
@@ -393,6 +524,7 @@ function pasangPengaturan() {
   window.pratinjauToko = pratinjau;
 
   el('gridIkon').onclick = klikIkon;
+  pasangTambahIkon();
   jumlah.onchange = pratinjau;
   hadiah.oninput = pratinjau;
 
