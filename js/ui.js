@@ -73,6 +73,12 @@ function svgIkon(kunci) {
   return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' + d + '"/></svg>';
 }
 
+function htmlPilihIkon(aktif) {
+  return Object.keys(IKON_SVG).map(k =>
+    '<button type="button" class="ik-pilih' + (k === aktif ? ' pilih' : '') + '" data-ikon="' + k +
+    '" aria-label="Ikon ' + k + '">' + svgIkon(k) + '</button>').join('');
+}
+
 function latarKartu(w, d) {
   const g = d.gaya || 'solid';
   if (g === 'right') return 'linear-gradient(135deg,' + w + ',color-mix(in srgb,' + w + ' 65%,#000))';
