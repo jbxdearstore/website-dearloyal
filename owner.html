@@ -164,11 +164,9 @@ function tampilDash() {
       '<div class="sec"><h3>Pengaturan toko</h3>' +
       '<div class="pratinjau" id="pratinjau"></div>' +
       '<form id="fSet" novalidate>' +
-      '<div class="dua">' +
-        '<div class="baris"><label for="sIkon">Ikon stempel</label><select id="sIkon">' +
-          Object.keys(IKON).map(k => '<option value="' + k + '">' + IKON[k] + ' ' + k + '</option>').join('') + '</select></div>' +
-        '<div class="baris"><label for="sJumlah">Jumlah stempel</label><select id="sJumlah">' +
-          [6, 8, 10, 12].map(n => '<option value="' + n + '">' + n + '</option>').join('') + '</select></div>' +
+      '<div class="baris"><label>Ikon stempel</label><input type="hidden" id="sIkon"><div class="ik-grid" id="gridIkon"></div></div>' +
+      '<div class="baris"><label for="sJumlah">Jumlah stempel</label><select id="sJumlah">' +
+        [6, 8, 10, 12].map(n => '<option value="' + n + '">' + n + '</option>').join('') + '</select></div>' +
       '</div>' +
       '<div class="baris"><label for="sHadiah">Hadiah</label><input id="sHadiah" maxlength="80"></div>' +
       '<div class="baris"><label for="sSyarat">Syarat hadiah (opsional)</label><textarea id="sSyarat" rows="2" maxlength="300"></textarea></div>' +
@@ -264,7 +262,9 @@ const WARNA = ['#2563eb', '#0ea5e9', '#16a34a', '#b45309', '#dc2626', '#db2777',
 function pasangPengaturan() {
   const ikon = el('sIkon'), jumlah = el('sJumlah'), hadiah = el('sHadiah'), jeda = el('sJeda');
 
-  ikon.value = toko.ikon in IKON ? toko.ikon : 'bintang';
+  ikon.value = toko.ikon in IKON_SVG ? toko.ikon : 'bintang';
+  const gambarIkon = () => { el('gridIkon').innerHTML = htmlPilihIkon(ikon.value); };
+  gambarIkon();
   jumlah.value = String(toko.jumlah_stempel);
   hadiah.value = toko.teks_hadiah || '';
   el('sSyarat').value = toko.syarat_hadiah || '';
@@ -286,7 +286,13 @@ function pasangPengaturan() {
 
   window.pratinjauToko = pratinjau;
 
-  ikon.onchange = pratinjau;
+  el('gridIkon').onclick = (e) => {
+    const b = e.target.closest('[data-ikon]');
+    if (!b) return;
+    ikon.value = b.dataset.ikon;
+    gambarIkon();
+    segarkanDesain();
+  };
   jumlah.onchange = pratinjau;
   hadiah.oninput = pratinjau;
 
@@ -425,7 +431,7 @@ function segarkanDesain() {
   if (!dz.w_latar2) el('c_w_latar2').value = '#7c3aed';
   tandaiBlok();
   el('pratinjauDesain').innerHTML = kartuDesain({
-    nama: toko.nama, logo: toko.logo_path, warna: wk, ikon: toko.ikon,
+    nama: toko.nama, logo: toko.logo_path, warna: wk, ikon: (el('sIkon') && el('sIkon').value) || toko.ikon,
     isi: Math.min(3, toko.jumlah_stempel), target: toko.jumlah_stempel,
     hadiah: toko.teks_hadiah, desain: dz
   });
@@ -569,7 +575,7 @@ function wizKartu(isi, n) {
 
 function tampilWizard() {
   if (!wz) {
-    wz = { n: 1, warna: warnaAman(toko.warna), ikon: (toko.ikon in IKON) ? toko.ikon : 'bintang',
+    wz = { n: 1, warna: warnaAman(toko.warna), ikon: (toko.ikon in IKON_SVG) ? toko.ikon : 'bintang',
            jumlah: toko.jumlah_stempel, hadiah: toko.teks_hadiah };
   }
   [null, wizLogo, wizTampilan, wizAturan, wizPin, wizSelesai][wz.n]();
@@ -604,13 +610,12 @@ function wizTampilan() {
   wizFrame('<h2 style="margin:0 0 4px">Tampilan kartu</h2>' +
     '<p class="sub">Pilih warna dan ikon stempel.</p><div id="pr"></div>' +
     '<div class="baris"><label>Warna kartu</label><div class="warna-pilih" id="swatch"></div></div>' +
-    '<div class="baris"><label for="wIkon">Ikon stempel</label><select id="wIkon">' +
-      Object.keys(IKON).map(k => '<option value="' + k + '">' + IKON[k] + ' ' + k + '</option>').join('') +
-    '</select></div>' +
+    '<div class="baris"><label>Ikon stempel</label><div class="ik-grid" id="gridIkonW"></div></div>' +
     '<div class="aksi"><button type="button" id="bKembali" class="tombol putih">Kembali</button>' +
     '<button type="button" id="bLanjut" class="tombol">Lanjut</button></div>');
   const gambar = () => {
     el('pr').innerHTML = wizKartu(3, wz.jumlah);
+    el('gridIkonW').innerHTML = htmlPilihIkon(wz.ikon);
     el('swatch').innerHTML = WARNA.map(c =>
       '<button type="button" class="sw' + (c.toLowerCase() === wz.warna.toLowerCase() ? ' pilih' : '') +
       '" data-warna="' + c + '" style="background:' + c + '" aria-label="Warna ' + c + '"></button>').join('');
@@ -623,7 +628,12 @@ function wizTampilan() {
     wz.warna = b.dataset.warna;
     gambar();
   };
-  el('wIkon').onchange = () => { wz.ikon = el('wIkon').value; gambar(); };
+  el('gridIkonW').onclick = (e) => {
+    const b = e.target.closest('[data-ikon]');
+    if (!b) return;
+    wz.ikon = b.dataset.ikon;
+    gambar();
+  };
   el('bKembali').onclick = () => { wz.n = 1; tampilWizard(); };
   el('bLanjut').onclick = async () => {
     const { error } = await db.rpc('ubah_pengaturan_toko',
