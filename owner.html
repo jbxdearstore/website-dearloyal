@@ -161,6 +161,7 @@ function tampilDash() {
       '<div class="baris-aksi"><button type="button" id="bSimpanDesain" class="tombol kecil" style="width:auto">Simpan desain</button>' +
       '<button type="button" id="bResetDesain" class="tombol putih kecil">Kembalikan ke bawaan</button></div>' +
       '<div id="pesanDesain" class="pesan"></div></div>' +
+      '<div class="sec"><h3>Gambar latar kartu <span class="redup">(Pro)</span></h3><div id="blokLatar"></div></div>' +
       '<div class="sec"><h3>Pengaturan toko</h3>' +
       '<div class="pratinjau" id="pratinjau"></div>' +
       '<form id="fSet" novalidate>' +
@@ -598,7 +599,7 @@ async function unggahLogo(file) {
 }
 
 /* ---------- desain kartu ---------- */
-let dz = {}, wk = '#2563eb';
+let dz = {}, wk = '#2563eb', latarKini = null;
 const BAGIAN_WARNA = [
   ['w_teks', 'Teks'], ['w_terisi', 'Stempel terisi'], ['w_ikon', 'Ikon stempel'],
   ['w_garis', 'Garis lingkaran'], ['w_angka', 'Angka di stempel kosong']
@@ -656,6 +657,7 @@ function tandaiBlok() {
 
   function segarkanDesain() {
   aturIkonKustomDz();
+  aturLatarDz();
   const b = bawaanWarna(dz);
   BAGIAN_WARNA.forEach(([k]) => {
     el('h_' + k).placeholder = b[k];
@@ -663,11 +665,9 @@ function tandaiBlok() {
   });
   if (!dz.w_latar2) el('c_w_latar2').value = '#7c3aed';
   tandaiBlok();
-  el('pratinjauDesain').innerHTML = kartuDesain({
-    nama: toko.nama, logo: toko.logo_path, warna: wk, ikon: (el('sIkon') && el('sIkon').value) || toko.ikon,
-    isi: Math.min(3, toko.jumlah_stempel), target: toko.jumlah_stempel,
-    hadiah: toko.teks_hadiah, desain: dz
-  });
+  const k = kartuPratinjau();
+  el('pratinjauDesain').innerHTML = k;
+  if (el('pratinjauLatar')) el('pratinjauLatar').innerHTML = k;
   if (window.pratinjauToko) window.pratinjauToko();
 }
 
@@ -724,12 +724,110 @@ function gambarTampil() {
     '</div>';
 }
 
+function kartuPratinjau() {
+  return kartuDesain({
+    nama: toko.nama, logo: toko.logo_path, warna: wk, ikon: (el('sIkon') && el('sIkon').value) || toko.ikon,
+    isi: Math.min(3, toko.jumlah_stempel), target: toko.jumlah_stempel,
+    hadiah: toko.teks_hadiah, desain: dz
+  });
+}
+
+function aturLatarDz() {
+  if (latarKini) dz.latar = latarKini; else delete dz.latar;
+}
+
+async function kompresLatar(file) {
+  const img = await new Promise((ok, gagal) => {
+    const i = new Image();
+    const url = URL.createObjectURL(file);
+    i.onload = () => { URL.revokeObjectURL(url); ok(i); };
+    i.onerror = () => { URL.revokeObjectURL(url); gagal(new Error('File bukan gambar yang valid.')); };
+    i.src = url;
+  });
+  let s = Math.min(1, 1000 / Math.max(img.width, img.height));
+  for (let n = 0; n < 6; n++) {
+    const cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(img.width * s));
+    cv.height = Math.max(1, Math.round(img.height * s));
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    for (const q of [0.82, 0.7, 0.58, 0.46]) {
+      const b = await new Promise(r => cv.toBlob(r, 'image/webp', q));
+      if (!b || b.type !== 'image/webp') throw new Error('Browser ini belum bisa memproses gambar ke WebP.');
+      if (b.size <= 80000) return { blob: b, a: cv.width / cv.height };
+    }
+    s *= 0.8;
+  }
+  throw new Error('Gambar terlalu rumit. Pakai gambar lain.');
+}
+
+async function unggahLatar(file) {
+  const { blob, a } = await kompresLatar(file);
+  if (a < 0.2 || a > 5) throw new Error('Bentuk gambar terlalu panjang atau terlalu tinggi.');
+  const w = Math.max(100, 62.5 * a);
+  const h = w * 1.6 / a;
+  const path = toko.id + '/latar-' + Date.now() + '.webp';
+  const { error } = await db.storage.from('latar').upload(path, blob,
+    { contentType: 'image/webp', cacheControl: '31536000' });
+  if (error) throw error;
+  const { data, error: e2 } = await db.rpc('simpan_latar',
+    { p_toko_id: toko.id, p_path: path, p_a: a, p_w: w, p_l: (100 - w) / 2, p_t: (100 - h) / 2 });
+  if (e2) { await db.storage.from('latar').remove([path]); throw e2; }
+  if (data.lama && data.lama !== path) await db.storage.from('latar').remove([data.lama]);
+  latarKini = data.latar;
+}
+
+function gambarLatar() {
+  const box = el('blokLatar');
+  if (!box) return;
+  if (!(toko.fitur_pro || []).includes('gambar_kartu')) {
+    const wa = linkWa(DL.ADMIN_WA);
+    box.innerHTML = '<div class="redup" style="margin-bottom:12px">Gambar latar adalah fitur Pro. Hubungi admin untuk mengaktifkannya di tokomu.</div>' +
+      (wa ? '<a class="tombol putih kecil" style="width:auto" href="' + wa + '" target="_blank" rel="noopener">Hubungi admin lewat WhatsApp</a>' : '');
+    return;
+  }
+  box.innerHTML = '<div class="pratinjau" id="pratinjauLatar"></div>' +
+    '<input id="fileLatar" type="file" accept="image/*" style="display:none">' +
+    '<div class="baris-aksi"><button type="button" id="bPilihLatar" class="tombol putih kecil">' +
+      (latarKini ? 'Ganti gambar' : 'Pilih gambar') + '</button>' +
+    (latarKini ? '<button type="button" id="bHapusLatar" class="tombol merah kecil">Hapus gambar</button>' : '') + '</div>' +
+    '<div class="redup" style="margin-top:8px">Foto otomatis dikecilkan. Warna teks dan stempel diatur di Desain kartu. Tombol Kembalikan ke bawaan tidak menghapus gambar.</div>' +
+    '<div id="pesanLatar" class="pesan"></div>';
+  const info = (t, j) => { const p = el('pesanLatar'); p.textContent = t; p.className = 'pesan tampil ' + j; };
+  el('bPilihLatar').onclick = () => el('fileLatar').click();
+  el('fileLatar').onchange = async () => {
+    const f = el('fileLatar').files[0];
+    el('fileLatar').value = '';
+    if (!f) return;
+    if (f.size > 15 * 1024 * 1024) return info('File terlalu besar (maksimal 15 MB).', 'galat');
+    info('Mengunggah...', 'ok');
+    try {
+      await unggahLatar(f);
+      gambarLatar();
+      segarkanDesain();
+      info('Gambar disimpan.', 'ok');
+    } catch (e) { info(e.message || 'Gagal mengunggah gambar.', 'galat'); }
+  };
+  const hapus = el('bHapusLatar');
+  if (hapus) hapus.onclick = async () => {
+    if (!confirm('Hapus gambar latar kartu?')) return;
+    const { data, error } = await db.rpc('hapus_latar', { p_toko_id: toko.id });
+    if (error) return info(error.message, 'galat');
+    if (data) await db.storage.from('latar').remove([data]);
+    latarKini = null;
+    gambarLatar();
+    segarkanDesain();
+    info('Gambar dihapus.', 'ok');
+  };
+}
+
 function pasangDesain() {
   dz = JSON.parse(JSON.stringify(toko.desain || {}));
+  latarKini = dz.latar || null;
   wk = warnaAman(toko.warna);
   gambarBlok();
   gambarKolomWarna();
   gambarTampil();
+  gambarLatar();
   segarkanDesain();
   el('blokTampil').onchange = (e) => {
     const k = e.target.dataset.t;
