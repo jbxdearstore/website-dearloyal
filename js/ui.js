@@ -101,7 +101,7 @@ function kartuDesain(o) {
   const d = o.desain || {};
   const t = d.tampil || {};
   const nampak = k => t[k] !== false;
-  const hadiah = t.hadiah === true;
+  const hadiah = false;
   const target = o.target;
   const kolom = target === 6 ? 3 : target === 8 ? 4 : target === 10 ? 5 : 6;
   let st = '';
