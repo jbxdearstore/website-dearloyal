@@ -228,3 +228,8 @@ a.kd-bungkus:active{transform:scale(.985)}
 .kd-hadiah{font-size:3.7cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:5cqw}
 
 .chip.aktif{background:var(--utama);color:#fff;border-color:var(--utama)}
+
+.ik-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px}
+.ik-pilih{display:flex;align-items:center;justify-content:center;height:52px;padding:0;border:2px solid var(--garis);border-radius:12px;background:#fff;color:var(--teks);cursor:pointer}
+.ik-pilih svg{width:26px;height:26px}
+.ik-pilih.pilih{border-color:var(--utama);background:color-mix(in srgb,var(--utama) 10%,#fff)}
