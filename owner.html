@@ -479,7 +479,8 @@ const TAMPIL = [['nama', 'Nama toko', true], ['logo', 'Logo toko', true],
 function gambarTampil() {
   const t = dz.tampil || {};
   el('blokTampil').innerHTML = '<div class="baris"><label>Tampilkan di kartu</label>' +
-    TAMPIL.map(([k, nama, def]) => '<label class="cek"><input type="checkbox" data-t="' + k + '"' +
+    TAMPIL.filter(([k]) => k !== 'logo' || toko.logo_path).map(([k, nama, def]) =>
+      '<label class="cek"><input type="checkbox" data-t="' + k + '"' +
       ((t[k] === undefined ? def : t[k]) ? ' checked' : '') + '> <span>' + nama + '</span></label>').join('') +
     '</div>';
 }
@@ -507,6 +508,13 @@ function pasangDesain() {
   };
 }
 
+function segarkanDariLogo() {
+  if (!el('blokTampil')) return;
+  if (dz.tampil) delete dz.tampil.logo;
+  gambarTampil();
+  segarkanDesain();
+}
+
 function pasangLogo() {
   const box = el('logoBox'), p = el('pesanLogo');
   const gambar = () => {
@@ -524,7 +532,7 @@ function pasangLogo() {
     if (!f) return;
     if (f.size > 8 * 1024 * 1024) return info('File terlalu besar (maksimal 8 MB).', 'galat');
     info('Mengunggah...', 'ok');
-    try { await unggahLogo(f); gambar(); info('Logo disimpan.', 'ok'); }
+    try { await unggahLogo(f); gambar(); segarkanDariLogo(); info('Logo disimpan.', 'ok'); }
     catch (e) { info(e.message || 'Gagal mengunggah logo.', 'galat'); }
   };
   el('bHapusLogo').onclick = async () => {
@@ -536,6 +544,7 @@ function pasangLogo() {
     toko.logo_path = null;
     if (lama) await db.storage.from('logo').remove([lama]);
     gambar();
+    segarkanDariLogo();
     info('Logo dihapus.', 'ok');
   };
 }
