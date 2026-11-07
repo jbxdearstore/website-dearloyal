@@ -157,6 +157,7 @@ function tampilDash() {
       '<div class="pratinjau" id="pratinjauDesain"></div>' +
       '<div id="blokWarna"></div><div id="kolomWarna"></div>' +
       '<div class="redup" style="margin-bottom:12px">Kolom kosong berarti memakai warna bawaan. Warna kartu dan gaya latar diatur di bagian atas.</div>' +
+      '<div id="blokTampil"></div>' +
       '<div class="baris-aksi"><button type="button" id="bSimpanDesain" class="tombol kecil" style="width:auto">Simpan desain</button>' +
       '<button type="button" id="bResetDesain" class="tombol putih kecil">Kembalikan ke bawaan</button></div>' +
       '<div id="pesanDesain" class="pesan"></div></div>' +
@@ -472,18 +473,37 @@ async function simpanDesain() {
   return true;
 }
 
+const TAMPIL = [['nama', 'Nama toko', true], ['logo', 'Logo toko', true],
+                ['jumlah', 'Jumlah stempel (contoh 3/8)', true], ['hadiah', 'Teks hadiah di dalam kartu', false]];
+
+function gambarTampil() {
+  const t = dz.tampil || {};
+  el('blokTampil').innerHTML = '<div class="baris"><label>Tampilkan di kartu</label>' +
+    TAMPIL.map(([k, nama, def]) => '<label class="cek"><input type="checkbox" data-t="' + k + '"' +
+      ((t[k] === undefined ? def : t[k]) ? ' checked' : '') + '> <span>' + nama + '</span></label>').join('') +
+    '</div>';
+}
+
 function pasangDesain() {
   dz = JSON.parse(JSON.stringify(toko.desain || {}));
   wk = warnaAman(toko.warna);
   gambarBlok();
   gambarKolomWarna();
+  gambarTampil();
   segarkanDesain();
+  el('blokTampil').onchange = (e) => {
+    const k = e.target.dataset.t;
+    if (!k) return;
+    dz.tampil = dz.tampil || {};
+    dz.tampil[k] = e.target.checked;
+    segarkanDesain();
+  };
   ['blokWarna', 'kolomWarna'].forEach(id => { el(id).oninput = ubahWarna; el(id).onclick = klikDesain; });
   el('bSimpanDesain').onclick = simpanDesain;
   el('bResetDesain').onclick = async () => {
     if (!confirm('Kembalikan seluruh desain kartu ke bawaan (solid)?')) return;
     dz = {};
-    if (await simpanDesain()) { gambarBlok(); gambarKolomWarna(); segarkanDesain(); }
+    if (await simpanDesain()) { gambarBlok(); gambarKolomWarna(); gambarTampil(); segarkanDesain(); }
   };
 }
 
