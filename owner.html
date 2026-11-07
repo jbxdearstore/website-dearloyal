@@ -164,7 +164,7 @@ function tampilDash() {
       '<div class="sec"><h3>Pengaturan toko</h3>' +
       '<div class="pratinjau" id="pratinjau"></div>' +
       '<form id="fSet" novalidate>' +
-      '<div class="baris"><label>Ikon stempel</label><input type="hidden" id="sIkon"><div class="ik-grid" id="gridIkon"></div></div>' +
+      '<div class="baris"><label>Ikon stempel</label><input type="hidden" id="sIkon"><div id="gridIkon"></div></div>' +
       '<div class="baris"><label for="sJumlah">Jumlah stempel</label><select id="sJumlah">' +
         [6, 8, 10, 12].map(n => '<option value="' + n + '">' + n + '</option>').join('') + '</select></div>' +
       '</div>' +
@@ -259,12 +259,118 @@ async function muatMember() {
 
 const WARNA = ['#2563eb', '#0ea5e9', '#16a34a', '#b45309', '#dc2626', '#db2777', '#7c3aed', '#0f172a'];
 
+let pustaka = { kustom: [], sembunyi: [], siap: false }, aturIkon = false;
+const IKON_MATA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const IKON_MATA_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
+
+function aturIkonKustomDz() {
+  if (!pustaka.siap) return;
+  const k = el('sIkon') ? el('sIkon').value : toko.ikon;
+  const m = /^c:[0-9]+$/.test(k) ? pustaka.kustom.find(i => 'c:' + i.id === k) : null;
+  if (m) dz.ikon_kustom = { vb: m.vb, isi: m.isi }; else delete dz.ikon_kustom;
+}
+
+function gambarPilihIkon() {
+  const box = el('gridIkon');
+  if (!box) return;
+  const cur = el('sIkon').value;
+  const sembunyi = pustaka.sembunyi || [];
+  const aksi = (jenis, nilai, svg, label) =>
+    '<button type="button" class="ik-aksi" data-aksi="' + jenis + '" data-nilai="' + nilai +
+    '" aria-label="' + label + '">' + svg + '</button>';
+  const kotak = (kunci, svg, tombolAksi) =>
+    '<div class="ik-wrap"><button type="button" class="ik-pilih' + (kunci === cur ? ' pilih' : '') +
+    '" data-ikon="' + kunci + '" aria-label="Pilih ikon">' + svg + '</button>' + (tombolAksi || '') + '</div>';
+  const semua = Object.keys(IKON_SVG);
+  const tampak = semua.filter(k => !sembunyi.includes(k));
+  const tersembunyi = semua.filter(k => sembunyi.includes(k));
+  let h = '<div class="ik-kepala"><button type="button" class="tombol putih kecil" data-atur="1" style="width:auto">' +
+    (aturIkon ? 'Selesai' : 'Atur ikon') + '</button></div><div class="ik-grid">' +
+    tampak.map(k => kotak(k, svgIkon(k),
+      aturIkon && k !== cur ? aksi('sembunyi', k, IKON_MATA_OFF, 'Sembunyikan ikon') : '')).join('') +
+    pustaka.kustom.map(i => kotak('c:' + i.id, svgKustom(i) || '',
+      aturIkon ? aksi('hapus', i.id, IKON_HAPUS, 'Hapus ikon') : '')).join('') + '</div>';
+  if (aturIkon) {
+    h += '<div class="ik-judul redup"><span>Ikon tersembunyi (' + tersembunyi.length + ')</span>' +
+      (tersembunyi.length ? '<button type="button" class="tombol putih kecil" data-pulih="1" style="width:auto">Pulihkan semua</button>' : '') +
+      '</div><div class="ik-grid">' +
+      tersembunyi.map(k => '<div class="ik-wrap"><span class="ik-pilih mati">' + svgIkon(k) + '</span>' +
+        aksi('pulih', k, IKON_MATA, 'Tampilkan ikon') + '</div>').join('') + '</div>';
+  }
+  box.innerHTML = h;
+}
+
+function pilihIkon(k) {
+  el('sIkon').value = k;
+  gambarPilihIkon();
+  segarkanDesain();
+}
+
+async function simpanSembunyi(arr) {
+  const { data, error } = await db.rpc('atur_ikon_sembunyi', { p_toko_id: toko.id, p_sembunyi: arr });
+  if (error) {
+    const p = el('pesanSet');
+    p.textContent = error.message;
+    p.className = 'pesan tampil galat';
+    return;
+  }
+  pustaka.sembunyi = data || [];
+  gambarPilihIkon();
+}
+
+async function aksiIkon(jenis, nilai) {
+  if (jenis === 'sembunyi') return simpanSembunyi((pustaka.sembunyi || []).concat(nilai));
+  if (jenis === 'pulih') return simpanSembunyi((pustaka.sembunyi || []).filter(k => k !== nilai));
+  if (jenis === 'hapus') {
+    const dipakai = el('sIkon').value === 'c:' + nilai;
+    if (!confirm(dipakai
+      ? 'Ikon ini sedang dipilih untuk kartu. Jika dihapus, kartu kembali memakai ikon bintang. Hapus?'
+      : 'Hapus ikon ini secara permanen?')) return;
+    const { error } = await db.rpc('hapus_ikon_toko', { p_toko_id: toko.id, p_id: Number(nilai) });
+    if (error) {
+      const p = el('pesanSet');
+      p.textContent = error.message;
+      p.className = 'pesan tampil galat';
+      return;
+    }
+    pustaka.kustom = pustaka.kustom.filter(i => String(i.id) !== String(nilai));
+    if (dipakai) el('sIkon').value = 'bintang';
+    if (toko.ikon === 'c:' + nilai) {
+      toko.ikon = 'bintang';
+      if (toko.desain) delete toko.desain.ikon_kustom;
+    }
+    gambarPilihIkon();
+    segarkanDesain();
+  }
+}
+
+function klikIkon(e) {
+  const a = e.target.closest('[data-aksi]');
+  if (a) return aksiIkon(a.dataset.aksi, a.dataset.nilai);
+  if (e.target.closest('[data-atur]')) { aturIkon = !aturIkon; return gambarPilihIkon(); }
+  if (e.target.closest('[data-pulih]')) return simpanSembunyi([]);
+  const b = e.target.closest('[data-ikon]');
+  if (b) pilihIkon(b.dataset.ikon);
+}
+
+async function muatPustakaIkon() {
+  const { data, error } = await db.rpc('ikon_toko_saya', { p_toko_id: toko.id });
+  if (error || !data) return;
+  pustaka = { kustom: data.kustom || [], sembunyi: data.sembunyi || [], siap: true };
+  const sekarang = el('sIkon').value;
+  if (/^c:[0-9]+$/.test(sekarang) && !pustaka.kustom.some(i => 'c:' + i.id === sekarang)) el('sIkon').value = 'bintang';
+  gambarPilihIkon();
+  segarkanDesain();
+}
+
 function pasangPengaturan() {
   const ikon = el('sIkon'), jumlah = el('sJumlah'), hadiah = el('sHadiah'), jeda = el('sJeda');
 
-  ikon.value = toko.ikon in IKON_SVG ? toko.ikon : 'bintang';
-  const gambarIkon = () => { el('gridIkon').innerHTML = htmlPilihIkon(ikon.value); };
-  gambarIkon();
+  ikon.value = (toko.ikon in IKON_SVG || /^c:[0-9]+$/.test(toko.ikon)) ? toko.ikon : 'bintang';
+  pustaka = { kustom: [], sembunyi: [], siap: false };
+  aturIkon = false;
+  gambarPilihIkon();
+  muatPustakaIkon();
   jumlah.value = String(toko.jumlah_stempel);
   hadiah.value = toko.teks_hadiah || '';
   el('sSyarat').value = toko.syarat_hadiah || '';
@@ -286,13 +392,7 @@ function pasangPengaturan() {
 
   window.pratinjauToko = pratinjau;
 
-  el('gridIkon').onclick = (e) => {
-    const b = e.target.closest('[data-ikon]');
-    if (!b) return;
-    ikon.value = b.dataset.ikon;
-    gambarIkon();
-    segarkanDesain();
-  };
+  el('gridIkon').onclick = klikIkon;
   jumlah.onchange = pratinjau;
   hadiah.oninput = pratinjau;
 
@@ -422,7 +522,8 @@ function tandaiBlok() {
   el('barisDua').style.display = g === 'gradient' ? 'block' : 'none';
 }
 
-function segarkanDesain() {
+  function segarkanDesain() {
+  aturIkonKustomDz();
   const b = bawaanWarna(dz);
   BAGIAN_WARNA.forEach(([k]) => {
     el('h_' + k).placeholder = b[k];
