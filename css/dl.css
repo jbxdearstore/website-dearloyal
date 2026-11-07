@@ -241,3 +241,6 @@ a.kd-bungkus:active{transform:scale(.985)}
 .ik-kepala{display:flex;justify-content:flex-end;margin-bottom:10px}
 .ik-judul{display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px}
 .ik-pilih.mati{opacity:.45;cursor:default}
+
+.kd{position:relative;isolation:isolate;overflow:hidden}
+.kd-latar{position:absolute;z-index:-1;max-width:none;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none}
