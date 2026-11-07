@@ -233,3 +233,11 @@ a.kd-bungkus:active{transform:scale(.985)}
 .ik-pilih{display:flex;align-items:center;justify-content:center;height:52px;padding:0;border:2px solid var(--garis);border-radius:12px;background:#fff;color:var(--teks);cursor:pointer}
 .ik-pilih svg{width:26px;height:26px}
 .ik-pilih.pilih{border-color:var(--utama);background:color-mix(in srgb,var(--utama) 10%,#fff)}
+
+.ik-wrap{position:relative}
+.ik-wrap .ik-pilih{width:100%}
+.ik-aksi{position:absolute;top:-8px;right:-8px;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--garis);border-radius:50%;background:#fff;color:var(--teks);cursor:pointer}
+.ik-aksi svg{width:16px;height:16px}
+.ik-kepala{display:flex;justify-content:flex-end;margin-bottom:10px}
+.ik-judul{display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px}
+.ik-pilih.mati{opacity:.45;cursor:default}
