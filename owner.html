@@ -579,163 +579,6 @@ async function unggahLogo(file) {
 }
 
 /* ---------- desain kartu ---------- */
-let dz = {}, wk = '#2563eb', latarKini = null;
-const BAGIAN_WARNA = [
-  ['w_teks', 'Teks'], ['w_terisi', 'Stempel terisi'], ['w_ikon', 'Ikon stempel'],
-  ['w_garis', 'Garis lingkaran'], ['w_angka', 'Angka di stempel kosong']
-];
-const GAYA = [['solid', 'Solid'], ['right', 'Right'], ['left', 'Left'], ['vertikal', 'Vertikal'],
-              ['horizontal', 'Horizontal'], ['highlight', 'Highlight'], ['gradient', 'Gradient']];
-
-function bawaanWarna(d) {
-  return { w_teks: '#ffffff', w_terisi: '#ffffff', w_ikon: wk,
-           w_garis: d.w_terisi || '#ffffff', w_angka: d.w_teks || '#ffffff' };
-}
-
-const IKON_HAPUS = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
-
-function barisWarna(k, nama, nilai, bawaan) {
-  return '<div class="baris">' + (nama ? '<label for="h_' + k + '">' + nama + '</label>' : '') +
-    '<div style="display:flex;gap:8px;align-items:center">' +
-    '<input type="color" id="c_' + k + '" data-k="' + k + '" value="' + (nilai || bawaan) +
-      '" style="width:48px;height:44px;padding:2px;flex:none">' +
-    '<input id="h_' + k + '" data-k="' + k + '" maxlength="7" placeholder="' + bawaan + '" value="' + (nilai || '') +
-      '" autocapitalize="characters" autocomplete="off" spellcheck="false"' + (nama ? '' : ' aria-label="Warna kedua"') + '>' +
-    '<button type="button" class="tombol putih kecil" data-kosong="' + k +
-      '" aria-label="Hapus kode warna" style="flex:none;width:auto;display:flex;align-items:center">' + IKON_HAPUS + '</button>' +
-    '</div></div>';
-}
-
-function gambarBlok() {
-  el('blokWarna').innerHTML =
-    '<div class="baris"><label>Warna kartu</label><div class="warna-pilih" id="swatchD"></div></div>' +
-    '<div class="baris"><div style="display:flex;gap:8px;align-items:center">' +
-    '<input type="color" id="c_wk" data-k="wk" style="width:48px;height:44px;padding:2px;flex:none">' +
-    '<input id="h_wk" data-k="wk" maxlength="7" autocapitalize="characters" autocomplete="off" spellcheck="false">' +
-    '</div></div>' +
-    '<div id="barisDua" style="display:none">' + barisWarna('w_latar2', '', dz.w_latar2, '#7c3aed') + '</div>' +
-    '<div class="baris"><label>Gaya latar</label><div class="chips" id="gayaChips">' +
-    GAYA.map(g => '<button type="button" class="chip" data-gaya="' + g[0] + '">' + g[1] + '</button>').join('') +
-    '</div></div>';
-}
-
-function gambarKolomWarna() {
-  const b = bawaanWarna(dz);
-  el('kolomWarna').innerHTML = BAGIAN_WARNA.map(([k, nama]) => barisWarna(k, nama, dz[k], b[k])).join('');
-}
-
-function tandaiBlok() {
-  el('swatchD').innerHTML = WARNA.map(c =>
-    '<button type="button" class="sw' + (c.toLowerCase() === wk.toLowerCase() ? ' pilih' : '') +
-    '" data-wk="' + c + '" style="background:' + c + '" aria-label="Warna ' + c + '"></button>').join('');
-  el('c_wk').value = wk;
-  if (document.activeElement !== el('h_wk')) el('h_wk').value = wk;
-  const g = dz.gaya || 'solid';
-  document.querySelectorAll('#gayaChips .chip').forEach(b => b.classList.toggle('aktif', b.dataset.gaya === g));
-  el('barisDua').style.display = g === 'gradient' ? 'block' : 'none';
-}
-
-  function segarkanDesain() {
-  aturIkonKustomDz();
-  aturLatarDz();
-  const b = bawaanWarna(dz);
-  BAGIAN_WARNA.forEach(([k]) => {
-    el('h_' + k).placeholder = b[k];
-    if (!dz[k]) el('c_' + k).value = b[k];
-  });
-  if (!dz.w_latar2) el('c_w_latar2').value = '#7c3aed';
-  tandaiBlok();
-  const k = kartuPratinjau();
-  el('pratinjauDesain').innerHTML = k;
-  if (el('pratinjauLatar')) el('pratinjauLatar').innerHTML = k;
-  if (window.pratinjauToko) window.pratinjauToko();
-}
-
-function ubahWarna(e) {
-  const k = e.target.dataset.k;
-  if (!k) return;
-  let v;
-  if (e.target.type === 'color') {
-    v = e.target.value.toLowerCase();
-    el('h_' + k).value = v;
-  } else {
-    v = e.target.value.trim();
-    if (v && v[0] !== '#') v = '#' + v;
-    if (/^#[0-9a-fA-F]{6}$/.test(v)) { v = v.toLowerCase(); el('c_' + k).value = v; }
-    else if ((v === '' || v === '#') && k !== 'wk') v = null;
-    else return;
-  }
-  if (k === 'wk') wk = v;
-  else if (v === null) delete dz[k];
-  else dz[k] = v;
-  segarkanDesain();
-}
-
-function klikDesain(e) {
-  const s = e.target.closest('[data-wk]');
-  if (s) { wk = s.dataset.wk; return segarkanDesain(); }
-  const g = e.target.closest('[data-gaya]');
-  if (g) { dz.gaya = g.dataset.gaya; return segarkanDesain(); }
-  const x = e.target.closest('[data-kosong]');
-  if (x) { delete dz[x.dataset.kosong]; el('h_' + x.dataset.kosong).value = ''; segarkanDesain(); }
-}
-
-async function simpanDesain() {
-  const p = el('pesanDesain');
-  const { data, error } = await db.rpc('simpan_desain', { p_toko_id: toko.id, p_desain: dz, p_warna: wk });
-  if (error) { p.textContent = error.message; p.className = 'pesan tampil galat'; return false; }
-  toko.desain = data;
-  toko.warna = wk;
-  dz = JSON.parse(JSON.stringify(data));
-  p.textContent = 'Desain disimpan.';
-  p.className = 'pesan tampil ok';
-  return true;
-}
-
-const TAMPIL = [['nama', 'Nama toko', true], ['logo', 'Logo toko', true],
-                ['jumlah', 'Jumlah stempel (contoh 3/8)', true]];
-
-function gambarTampil() {
-  const t = dz.tampil || {};
-  el('blokTampil').innerHTML = '<div class="baris"><label>Tampilkan di kartu</label>' +
-    TAMPIL.filter(([k]) => k !== 'logo' || toko.logo_path).map(([k, nama, def]) =>
-      '<label class="cek"><input type="checkbox" data-t="' + k + '"' +
-      ((t[k] === undefined ? def : t[k]) ? ' checked' : '') + '> <span>' + nama + '</span></label>').join('') +
-    '</div>';
-}
-
-function kartuPratinjau() {
-  return kartuDesain({
-    nama: toko.nama, logo: toko.logo_path, warna: wk, ikon: (el('sIkon') && el('sIkon').value) || toko.ikon,
-    isi: Math.min(3, toko.jumlah_stempel), target: toko.jumlah_stempel,
-    hadiah: toko.teks_hadiah, desain: dz
-  });
-}
-
-function aturLatarDz() {
-  if (latarKini) dz.latar = latarKini; else delete dz.latar;
-}
-
-async function kompresLatar(file) {
-  const img = await new Promise((ok, gagal) => {
-    const i = new Image();
-    const url = URL.createObjectURL(file);
-    i.onload = () => { URL.revokeObjectURL(url); ok(i); };
-    i.onerror = () => { URL.revokeObjectURL(url); gagal(new Error('File bukan gambar yang valid.')); };
-    i.src = url;
-  });
-  let s = Math.min(1, 1000 / Math.max(img.width, img.height));
-  for (let n = 0; n < 6; n++) {
-    const cv = document.createElement('canvas');
-    cv.width = Math.max(1, Math.round(img.width * s));
-    cv.height = Math.max(1, Math.round(img.height * s));
-    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-    for (const q of [0.82, 0.7, 0.58, 0.46]) {
-      const b = await new Promise(r => cv.toBlob(r, 'image/webp', q));
-      if (!b || b.type !== 'image/webp') throw new Error('Browser ini belum bisa memproses gambar ke WebP.');
-      if (b.size <= 80000) return { blob: b, a: cv.width / cv.height };
-    }
-/* ---------- desain kartu ---------- */
 let dz = {}, wk = '#2563eb', latarKini = null, modeLatar = 'warna', dasar = '';
 const punyaPro = () => (toko.fitur_pro || []).includes('gambar_kartu');
 const BAGIAN_WARNA = [
@@ -1224,7 +1067,6 @@ function wizTampilan() {
       '<button type="button" class="sw' + (c.toLowerCase() === wz.warna.toLowerCase() ? ' pilih' : '') +
       '" data-warna="' + c + '" style="background:' + c + '" aria-label="Warna ' + c + '"></button>').join('');
   };
-  el('wIkon').value = wz.ikon;
   gambar();
   el('swatch').onclick = (e) => {
     const b = e.target.closest('button');
@@ -1398,6 +1240,7 @@ async function muat() {
   tampilDash();
 }
 muat();
+
 </script>
 </body>
 </html>
