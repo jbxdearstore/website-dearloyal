@@ -146,48 +146,50 @@ function tampilDash() {
       '<div class="redup" style="margin-top:8px">Cetak dan tempel di kasir. Pembeli scan untuk bergabung.</div>' +
       '<div class="baris-aksi"><button type="button" id="salinLink" class="tombol putih kecil">Salin link</button>' +
       '<button type="button" id="simpanQr" class="tombol putih kecil">Simpan QR sebagai gambar</button></div></div>' +
-      '<div class="sec"><h3>Logo toko</h3>' +
-      '<div id="logoBox" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"></div>' +
-      '<input id="fileLogo" type="file" accept="image/png,image/jpeg,image/webp" style="display:none">' +
-      '<div class="baris-aksi"><button type="button" id="bPilihLogo" class="tombol putih kecil">Pilih logo</button>' +
-      '<button type="button" id="bHapusLogo" class="tombol merah kecil">Hapus logo</button></div>' +
-      '<div class="redup" style="margin-top:8px">Gambar otomatis dikecilkan. Logo tampil di kartu pembeli dan halaman toko.</div>' +
-      '<div id="pesanLogo" class="pesan"></div></div>' +
-      '<div class="sec"><h3>Desain kartu</h3>' +
-      '<div class="pratinjau" id="pratinjauDesain"></div>' +
-      '<div id="blokWarna"></div><div id="kolomWarna"></div>' +
-      '<div class="redup" style="margin-bottom:12px">Kolom kosong berarti memakai warna bawaan. Warna kartu dan gaya latar diatur di bagian atas.</div>' +
-      '<div id="blokTampil"></div>' +
-      '<div class="baris-aksi"><button type="button" id="bSimpanDesain" class="tombol kecil" style="width:auto">Simpan desain</button>' +
-      '<button type="button" id="bResetDesain" class="tombol putih kecil">Kembalikan ke bawaan</button></div>' +
-      '<div id="pesanDesain" class="pesan"></div></div>' +
-      '<div class="sec"><h3>Gambar latar kartu <span class="redup">(Pro)</span></h3><div id="blokLatar"></div></div>' +
-      '<div class="sec"><h3>Pengaturan toko</h3>' +
-      '<div class="pratinjau" id="pratinjau"></div>' +
-      '<form id="fSet" novalidate>' +
-      '<div class="baris"><label>Ikon stempel</label><input type="hidden" id="sIkon"><div id="gridIkon"></div>' +
-      '<div id="tambahIkon" style="display:none">' +
-        '<div class="ik-judul redup"><span id="infoKustom"></span></div>' +
-        '<button type="button" id="bBukaTambah" class="tombol putih kecil" style="width:auto">+ Tambah ikon SVG</button>' +
-        '<div id="formTambah" style="display:none">' +
-          '<textarea id="kodeSvg" rows="6" placeholder="Tempel kode SVG di sini" spellcheck="false" autocapitalize="none" autocomplete="off"></textarea>' +
-          '<div class="redup" style="margin:8px 0 4px">Pratinjau</div>' +
-          '<div id="pratinjauSvg" class="ik-pilih" style="width:64px;height:64px;cursor:default"></div>' +
-          '<div class="baris-aksi"><button type="button" id="bSimpanIkon" class="tombol kecil" style="width:auto" disabled>Simpan ikon</button>' +
-          '<button type="button" id="bBatalIkon" class="tombol putih kecil" style="width:auto">Batal</button></div>' +
+      '<div class="sec" id="secDesain"><h3>Desain kartu</h3>' +
+      '<div class="lekat"><div class="lekat-kartu" id="pratinjauDesain"></div>' +
+        '<div class="tanda-simpan" id="tandaSimpan">Tersimpan</div></div>' +
+      '<div class="grup"><div class="grup-judul">1. Warna utama</div><div id="blokWarna"></div></div>' +
+      '<div class="grup"><div class="grup-judul">2. Latar kartu</div><div id="blokLatar"></div></div>' +
+      '<div class="grup"><div class="grup-judul">3. Isi kartu</div>' +
+        '<div id="logoBox" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"></div>' +
+        '<input id="fileLogo" type="file" accept="image/png,image/jpeg,image/webp" style="display:none">' +
+        '<div class="baris-aksi"><button type="button" id="bPilihLogo" class="tombol putih kecil">Pilih logo</button>' +
+        '<button type="button" id="bHapusLogo" class="tombol merah kecil">Hapus logo</button></div>' +
+        '<div class="redup" style="margin:8px 0 6px">Logo tersimpan langsung dan dikecilkan otomatis.</div>' +
+        '<div id="pesanLogo" class="pesan"></div>' +
+        '<div id="blokTampil"></div></div>' +
+      '<div class="grup"><div class="grup-judul">4. Stempel</div>' +
+        '<label>Ikon stempel</label><input type="hidden" id="sIkon"><div id="gridIkon"></div>' +
+        '<div id="tambahIkon" style="display:none">' +
+          '<div class="ik-judul redup"><span id="infoKustom"></span></div>' +
+          '<button type="button" id="bBukaTambah" class="tombol putih kecil" style="width:auto">+ Tambah ikon SVG</button>' +
+          '<div id="formTambah" style="display:none">' +
+            '<textarea id="kodeSvg" rows="6" placeholder="Tempel kode SVG di sini" spellcheck="false" autocapitalize="none" autocomplete="off"></textarea>' +
+            '<div class="redup" style="margin:8px 0 4px">Pratinjau</div>' +
+            '<div id="pratinjauSvg" class="ik-pilih" style="width:64px;height:64px;cursor:default"></div>' +
+            '<div class="baris-aksi"><button type="button" id="bSimpanIkon" class="tombol kecil" style="width:auto" disabled>Simpan ikon</button>' +
+            '<button type="button" id="bBatalIkon" class="tombol putih kecil" style="width:auto">Batal</button></div>' +
+          '</div>' +
+          '<div id="pesanTambah" class="pesan"></div>' +
         '</div>' +
-        '<div id="pesanTambah" class="pesan"></div>' +
-      '</div></div>' +
+        '<div class="redup" style="margin:14px 0 8px">Kolom warna yang dikosongkan memakai warna bawaan.</div>' +
+        '<div id="kolomStempel"></div></div>' +
+      '<div class="grup"><div class="grup-judul">5. Teks</div><div id="kolomTeks"></div></div>' +
+      '<div class="baris-aksi"><button type="button" id="bSimpanDesain" class="tombol kecil" style="width:auto" disabled>Simpan desain</button>' +
+        '<button type="button" id="bResetDesain" class="tombol putih kecil">Kembalikan ke bawaan</button></div>' +
+      '<div id="pesanDesain" class="pesan"></div></div>' +
+      '<div class="sec"><h3>Aturan program</h3>' +
+      '<form id="fSet" novalidate>' +
       '<div class="baris"><label for="sJumlah">Jumlah stempel</label><select id="sJumlah">' +
         [6, 8, 10, 12].map(n => '<option value="' + n + '">' + n + '</option>').join('') + '</select></div>' +
-      '</div>' +
       '<div class="baris"><label for="sHadiah">Hadiah</label><input id="sHadiah" maxlength="80"></div>' +
       '<div class="baris"><label for="sSyarat">Syarat hadiah (opsional)</label><textarea id="sSyarat" rows="2" maxlength="300"></textarea></div>' +
       '<div class="baris"><label for="sIg">Instagram (opsional, tanpa @)</label><input id="sIg" maxlength="30" autocapitalize="none"></div>' +
       '<div class="baris"><label for="sJeda">Jeda antar stempel</label><select id="sJeda">' +
         [[0, 'Tanpa jeda'], [5, '5 menit'], [10, '10 menit'], [30, '30 menit'], [60, '1 jam'], [240, '4 jam'], [1440, '1 hari']]
           .map(j => '<option value="' + j[0] + '">' + j[1] + '</option>').join('') + '</select></div>' +
-      '<button type="submit" class="tombol kecil" style="width:auto">Simpan pengaturan</button></form>' +
+      '<button type="submit" class="tombol kecil" style="width:auto">Simpan aturan</button></form>' +
       '<div id="pesanSet" class="pesan"></div></div>' +
     '<div class="sec"><h3>PIN kasir</h3>' +
       '<form id="fPin" novalidate><div class="baris"><label for="pinBaru">PIN baru (6 digit angka)</label>' +
@@ -295,8 +297,8 @@ function gambarPilihIkon() {
     '<div class="ik-wrap"><button type="button" class="ik-pilih' + (kunci === cur ? ' pilih' : '') +
     '" data-ikon="' + kunci + '" aria-label="Pilih ikon">' + svg + '</button>' + (tombolAksi || '') + '</div>';
   const semua = Object.keys(IKON_SVG);
-  const tampak = semua.filter(k => !sembunyi.includes(k));
-  const tersembunyi = semua.filter(k => sembunyi.includes(k));
+  const tampak = semua.filter(k => !sembunyi.includes(k) || k === cur);
+  const tersembunyi = semua.filter(k => sembunyi.includes(k) && k !== cur);
   let h = '<div class="ik-kepala"><button type="button" class="tombol putih kecil" data-atur="1" style="width:auto">' +
     (aturIkon ? 'Selesai' : 'Atur ikon') + '</button></div><div class="ik-grid">' +
     tampak.map(k => kotak(k, svgIkon(k),
@@ -329,7 +331,7 @@ function pilihIkon(k) {
 async function simpanSembunyi(arr) {
   const { data, error } = await db.rpc('atur_ikon_sembunyi', { p_toko_id: toko.id, p_sembunyi: arr });
   if (error) {
-    const p = el('pesanSet');
+    const p = el('pesanDesain');
     p.textContent = error.message;
     p.className = 'pesan tampil galat';
     return;
@@ -348,7 +350,7 @@ async function aksiIkon(jenis, nilai) {
       : 'Hapus ikon ini secara permanen?')) return;
     const { error } = await db.rpc('hapus_ikon_toko', { p_toko_id: toko.id, p_id: Number(nilai) });
     if (error) {
-      const p = el('pesanSet');
+      const p = el('pesanDesain');
       p.textContent = error.message;
       p.className = 'pesan tampil galat';
       return;
@@ -496,13 +498,7 @@ function pasangTambahIkon() {
 }
 
 function pasangPengaturan() {
-  const ikon = el('sIkon'), jumlah = el('sJumlah'), hadiah = el('sHadiah'), jeda = el('sJeda');
-
-  ikon.value = (toko.ikon in IKON_SVG || /^c:[0-9]+$/.test(toko.ikon)) ? toko.ikon : 'bintang';
-  pustaka = { kustom: [], sembunyi: [], siap: false };
-  aturIkon = false;
-  gambarPilihIkon();
-  muatPustakaIkon();
+  const jumlah = el('sJumlah'), hadiah = el('sHadiah'), jeda = el('sJeda');
   jumlah.value = String(toko.jumlah_stempel);
   hadiah.value = toko.teks_hadiah || '';
   el('sSyarat').value = toko.syarat_hadiah || '';
@@ -511,23 +507,6 @@ function pasangPengaturan() {
     jeda.add(new Option(toko.jeda_menit + ' menit', toko.jeda_menit));
   }
   jeda.value = String(toko.jeda_menit);
-
-  const pratinjau = () => {
-    const n = Number(jumlah.value);
-    const isi = Math.min(3, n);
-    el('pratinjau').innerHTML = kartuDesain({
-      nama: toko.nama, logo: toko.logo_path, warna: wk, ikon: ikon.value,
-      isi: isi, target: n, hadiah: hadiah.value, desain: dz
-    }) + '<div class="kd-info">Kumpulkan ' + (n - isi) + ' stempel lagi untuk: ' + esc(hadiah.value || '-') + '</div>';
-  };
-  pratinjau();
-
-  window.pratinjauToko = pratinjau;
-
-  el('gridIkon').onclick = klikIkon;
-  pasangTambahIkon();
-  jumlah.onchange = pratinjau;
-  hadiah.oninput = pratinjau;
 
   el('fSet').onsubmit = async (e) => {
     e.preventDefault();
@@ -545,7 +524,7 @@ function pasangPengaturan() {
     const { error } = await db.rpc('ubah_pengaturan_toko', {
       p_toko_id: toko.id,
       p_data: {
-        warna: toko.warna, ikon: ikon.value, jumlah_stempel: baruJumlah, teks_hadiah: teks,
+        jumlah_stempel: baruJumlah, teks_hadiah: teks,
         syarat_hadiah: el('sSyarat').value, instagram: el('sIg').value.trim(),
         jeda_menit: Number(jeda.value)
       }
@@ -555,11 +534,12 @@ function pasangPengaturan() {
       p.className = 'pesan tampil galat';
       return;
     }
-    toko.ikon = ikon.value; toko.jumlah_stempel = baruJumlah;
+    toko.jumlah_stempel = baruJumlah;
     toko.teks_hadiah = teks; toko.syarat_hadiah = el('sSyarat').value;
     toko.instagram = el('sIg').value.trim(); toko.jeda_menit = Number(jeda.value);
-    p.textContent = 'Pengaturan disimpan.';
+    p.textContent = 'Aturan disimpan.';
     p.className = 'pesan tampil ok';
+    segarkanDesain();
     muatMember();
   };
 }
@@ -755,6 +735,327 @@ async function kompresLatar(file) {
       if (!b || b.type !== 'image/webp') throw new Error('Browser ini belum bisa memproses gambar ke WebP.');
       if (b.size <= 80000) return { blob: b, a: cv.width / cv.height };
     }
+/* ---------- desain kartu ---------- */
+let dz = {}, wk = '#2563eb', latarKini = null, modeLatar = 'warna', dasar = '';
+const punyaPro = () => (toko.fitur_pro || []).includes('gambar_kartu');
+const BAGIAN_WARNA = [
+  ['w_teks', 'Warna teks'], ['w_terisi', 'Warna stempel terisi'], ['w_ikon', 'Warna ikon'],
+  ['w_garis', 'Warna garis lingkaran'], ['w_angka', 'Warna angka di stempel kosong']
+];
+const GAYA = [['solid', 'Solid'], ['right', 'Right'], ['left', 'Left'], ['vertikal', 'Vertikal'],
+              ['horizontal', 'Horizontal'], ['highlight', 'Highlight'], ['gradient', 'Gradient']];
+const TAMPIL = [['nama', 'Nama toko'], ['logo', 'Logo toko'], ['jumlah', 'Jumlah stempel (contoh 3/8)']];
+const IKON_HAPUS = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
+
+function bawaanWarna(d) {
+  return { w_teks: '#ffffff', w_terisi: '#ffffff', w_ikon: wk,
+           w_garis: d.w_terisi || '#ffffff', w_angka: d.w_teks || '#ffffff' };
+}
+
+function urut(o) {
+  return JSON.stringify(o, (k, v) => (v && typeof v === 'object' && !Array.isArray(v))
+    ? Object.keys(v).sort().reduce((a, x) => { a[x] = v[x]; return a; }, {}) : v);
+}
+
+function snapshot() {
+  const d = Object.assign({}, dz);
+  delete d.latar; delete d.ikon_kustom;
+  return urut({ d: d, wk: wk, ik: el('sIkon').value, m: modeLatar });
+}
+
+function setDasarMode(m) {
+  const o = JSON.parse(dasar);
+  o.m = m;
+  dasar = urut(o);
+}
+
+function segarkanPenanda() {
+  const t = el('tandaSimpan');
+  if (!t) return;
+  const kotor = snapshot() !== dasar;
+  t.textContent = kotor ? 'Ada perubahan belum disimpan' : 'Tersimpan';
+  t.className = 'tanda-simpan' + (kotor ? ' kotor' : '');
+  el('bSimpanDesain').disabled = !kotor;
+  window.onbeforeunload = kotor ? (e => { e.preventDefault(); e.returnValue = ''; }) : null;
+}
+
+function rapikanTampil() {
+  if (!dz.tampil) return;
+  delete dz.tampil.hadiah;
+  Object.keys(dz.tampil).forEach(k => { if (dz.tampil[k] !== false) delete dz.tampil[k]; });
+  if (!Object.keys(dz.tampil).length) delete dz.tampil;
+}
+
+function barisWarna(k, nama, nilai, bawaan) {
+  return '<div class="baris">' + (nama ? '<label for="h_' + k + '">' + nama + '</label>' : '') +
+    '<div style="display:flex;gap:8px;align-items:center">' +
+    '<input type="color" id="c_' + k + '" data-k="' + k + '" value="' + (nilai || bawaan) +
+      '" style="width:48px;height:44px;padding:2px;flex:none">' +
+    '<input id="h_' + k + '" data-k="' + k + '" maxlength="7" placeholder="' + bawaan + '" value="' + (nilai || '') +
+      '" autocapitalize="characters" autocomplete="off" spellcheck="false"' + (nama ? '' : ' aria-label="Warna kedua"') + '>' +
+    '<button type="button" class="tombol putih kecil" data-kosong="' + k +
+      '" aria-label="Hapus kode warna" style="flex:none;width:auto;display:flex;align-items:center">' + IKON_HAPUS + '</button>' +
+    '</div></div>';
+}
+
+function gambarBlok() {
+  el('blokWarna').innerHTML =
+    '<div class="warna-pilih" id="swatchD" style="margin-bottom:12px"></div>' +
+    '<div style="display:flex;gap:8px;align-items:center">' +
+    '<input type="color" id="c_wk" data-k="wk" style="width:48px;height:44px;padding:2px;flex:none">' +
+    '<input id="h_wk" data-k="wk" maxlength="7" autocapitalize="characters" autocomplete="off" spellcheck="false">' +
+    '</div>' +
+    '<div class="redup" style="margin-top:8px">Dipakai untuk latar kartu, warna ikon bawaan, serta tombol dan judul di halaman toko.</div>';
+}
+
+function gambarKolomWarna() {
+  const b = bawaanWarna(dz);
+  const buat = (ks) => BAGIAN_WARNA.filter(([k]) => ks.includes(k))
+    .map(([k, nama]) => barisWarna(k, nama, dz[k], b[k])).join('');
+  el('kolomStempel').innerHTML = buat(['w_terisi', 'w_ikon', 'w_garis', 'w_angka']);
+  el('kolomTeks').innerHTML = buat(['w_teks']);
+}
+
+function htmlSaklar(k, teks, hidup) {
+  return '<div class="saklar"><span class="saklar-teks">' + teks + '</span>' +
+    '<button type="button" role="switch" class="sk" data-sk="' + k + '" aria-checked="' + (hidup ? 'true' : 'false') +
+    '" aria-label="' + teks + '"></button></div>';
+}
+
+function gambarTampil() {
+  const t = dz.tampil || {};
+  el('blokTampil').innerHTML = TAMPIL.filter(([k]) => k !== 'logo' || toko.logo_path)
+    .map(([k, nama]) => htmlSaklar(k, nama, t[k] !== false)).join('');
+}
+
+function tandaiBlok() {
+  if (el('swatchD')) {
+    el('swatchD').innerHTML = WARNA.map(c =>
+      '<button type="button" class="sw' + (c.toLowerCase() === wk.toLowerCase() ? ' pilih' : '') +
+      '" data-wk="' + c + '" style="background:' + c + '" aria-label="Warna ' + c + '"></button>').join('');
+  }
+  el('c_wk').value = wk;
+  if (document.activeElement !== el('h_wk')) el('h_wk').value = wk;
+  const g = dz.gaya || 'solid';
+  document.querySelectorAll('#gayaChips .chip').forEach(b => b.classList.toggle('aktif', b.dataset.gaya === g));
+  if (el('barisDua')) el('barisDua').style.display = g === 'gradient' ? 'block' : 'none';
+}
+
+function tandaiLabelLatar() {
+  const g = modeLatar === 'gambar';
+  const s = document.querySelector('[data-sk="latar"]');
+  if (s) s.setAttribute('aria-checked', g ? 'true' : 'false');
+  if (el('lblWarna')) el('lblWarna').className = g ? '' : 'on';
+  if (el('lblGambar')) el('lblGambar').className = g ? 'on' : '';
+}
+
+function infoLatar(t, j) {
+  const p = el('pesanLatar');
+  if (!p) return;
+  p.textContent = t;
+  p.className = 'pesan tampil ' + j;
+}
+
+function gambarLatar() {
+  const box = el('blokLatar');
+  if (!box) return;
+  const pro = punyaPro();
+  if (!pro) modeLatar = 'warna';
+  box.innerHTML = '<div class="saklar-latar"><span id="lblWarna">Warna</span>' +
+    '<button type="button" role="switch" class="sk" data-sk="latar" aria-checked="false" aria-label="Pakai gambar sebagai latar"' +
+      (pro ? '' : ' disabled') + '></button>' +
+    '<span id="lblGambar">Gambar' + (pro ? '' : '<span class="chip-pro">Pro</span>') + '</span></div>' +
+    '<div id="panelLatar"></div>';
+  tandaiLabelLatar();
+  gambarPanelLatar();
+}
+
+function gambarPanelLatar() {
+  const p = el('panelLatar');
+  if (!p) return;
+  const pro = punyaPro();
+  if (modeLatar === 'gambar' && pro) {
+    p.innerHTML = '<input id="fileLatar" type="file" accept="image/*" style="display:none">' +
+      '<div class="baris-aksi" style="margin-top:0"><button type="button" id="bPilihLatar" class="tombol putih kecil">' +
+        (latarKini ? 'Ganti gambar' : 'Pilih gambar') + '</button>' +
+      (latarKini ? '<button type="button" id="bHapusLatar" class="tombol merah kecil">Hapus gambar</button>' : '') + '</div>' +
+      '<div class="redup" style="margin-top:8px">' + (latarKini ? 'Gambar tersimpan langsung. ' : 'Belum ada gambar. ') +
+        'Foto otomatis dikecilkan. Atur warna teks dan stempel di bawah supaya tetap terbaca.</div>' +
+      '<div id="pesanLatar" class="pesan"></div>';
+    el('bPilihLatar').onclick = () => el('fileLatar').click();
+    el('fileLatar').onchange = async () => {
+      const f = el('fileLatar').files[0];
+      el('fileLatar').value = '';
+      if (!f) return;
+      if (f.size > 15 * 1024 * 1024) return infoLatar('File terlalu besar (maksimal 15 MB).', 'galat');
+      infoLatar('Mengunggah...', 'ok');
+      try {
+        await unggahLatar(f);
+        modeLatar = 'gambar';
+        setDasarMode('gambar');
+        tandaiLabelLatar();
+        gambarPanelLatar();
+        segarkanDesain();
+        infoLatar('Gambar disimpan.', 'ok');
+      } catch (e) { infoLatar(e.message || 'Gagal mengunggah gambar.', 'galat'); }
+    };
+    const h = el('bHapusLatar');
+    if (h) h.onclick = async () => {
+      if (!confirm('Hapus gambar latar kartu?')) return;
+      const { data, error } = await db.rpc('hapus_latar', { p_toko_id: toko.id });
+      if (error) return infoLatar(error.message, 'galat');
+      if (data) await db.storage.from('latar').remove([data]);
+      latarKini = null;
+      modeLatar = 'warna';
+      setDasarMode('warna');
+      tandaiLabelLatar();
+      gambarPanelLatar();
+      segarkanDesain();
+    };
+  } else {
+    const wa = linkWa(DL.ADMIN_WA);
+    p.innerHTML = '<div class="baris"><label>Gaya latar</label><div class="chips" id="gayaChips">' +
+      GAYA.map(g => '<button type="button" class="chip" data-gaya="' + g[0] + '">' + g[1] + '</button>').join('') +
+      '</div></div>' +
+      '<div id="barisDua" style="display:none">' + barisWarna('w_latar2', '', dz.w_latar2, '#7c3aed') + '</div>' +
+      (pro ? '' : '<div class="redup" style="margin-top:8px">Gambar latar adalah fitur Pro. Hubungi admin untuk mengaktifkannya di tokomu.</div>' +
+        (wa ? '<a class="tombol putih kecil" style="width:auto;margin-top:8px" href="' + wa + '" target="_blank" rel="noopener">Hubungi admin lewat WhatsApp</a>' : ''));
+    tandaiBlok();
+  }
+}
+
+function kartuPratinjau() {
+  return kartuDesain({
+    nama: toko.nama, logo: toko.logo_path, warna: wk, ikon: (el('sIkon') && el('sIkon').value) || toko.ikon,
+    isi: Math.min(3, toko.jumlah_stempel), target: toko.jumlah_stempel,
+    hadiah: toko.teks_hadiah, desain: dz
+  });
+}
+
+function aturLatarDz() {
+  if (latarKini && modeLatar === 'gambar') {
+    const l = Object.assign({}, latarKini);
+    delete l.aktif;
+    dz.latar = l;
+  } else delete dz.latar;
+}
+
+function segarkanDesain() {
+  aturIkonKustomDz();
+  aturLatarDz();
+  const b = bawaanWarna(dz);
+  BAGIAN_WARNA.forEach(([k]) => {
+    const h = el('h_' + k), c = el('c_' + k);
+    if (h) h.placeholder = b[k];
+    if (c && !dz[k]) c.value = b[k];
+  });
+  if (el('c_w_latar2') && !dz.w_latar2) el('c_w_latar2').value = '#7c3aed';
+  tandaiBlok();
+  el('pratinjauDesain').innerHTML = kartuPratinjau();
+  segarkanPenanda();
+}
+
+function ubahWarna(e) {
+  const k = e.target.dataset.k;
+  if (!k) return;
+  let v;
+  if (e.target.type === 'color') {
+    v = e.target.value.toLowerCase();
+    el('h_' + k).value = v;
+  } else {
+    v = e.target.value.trim();
+    if (v && v[0] !== '#') v = '#' + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) { v = v.toLowerCase(); el('c_' + k).value = v; }
+    else if ((v === '' || v === '#') && k !== 'wk') v = null;
+    else return;
+  }
+  if (k === 'wk') wk = v;
+  else if (v === null) delete dz[k];
+  else dz[k] = v;
+  segarkanDesain();
+}
+
+function klikSaklar(b) {
+  const k = b.dataset.sk;
+  const hidup = b.getAttribute('aria-checked') === 'true';
+  if (k === 'latar') {
+    modeLatar = hidup ? 'warna' : 'gambar';
+    tandaiLabelLatar();
+    gambarPanelLatar();
+  } else {
+    b.setAttribute('aria-checked', hidup ? 'false' : 'true');
+    dz.tampil = dz.tampil || {};
+    if (hidup) dz.tampil[k] = false; else delete dz.tampil[k];
+    if (!Object.keys(dz.tampil).length) delete dz.tampil;
+  }
+  segarkanDesain();
+}
+
+function klikDesain(e) {
+  const s = e.target.closest('[data-wk]');
+  if (s) { wk = s.dataset.wk; return segarkanDesain(); }
+  const g = e.target.closest('[data-gaya]');
+  if (g) { dz.gaya = g.dataset.gaya; return segarkanDesain(); }
+  const x = e.target.closest('[data-kosong]');
+  if (x) { delete dz[x.dataset.kosong]; el('h_' + x.dataset.kosong).value = ''; return segarkanDesain(); }
+  const k = e.target.closest('[data-sk]');
+  if (k) klikSaklar(k);
+}
+
+async function simpanDesain() {
+  const p = el('pesanDesain');
+  const d = Object.assign({}, dz);
+  delete d.latar; delete d.ikon_kustom;
+  const { data, error } = await db.rpc('simpan_desain_semua', {
+    p_toko_id: toko.id, p_desain: d, p_warna: wk, p_ikon: el('sIkon').value,
+    p_latar_aktif: latarKini ? (modeLatar === 'gambar') : null
+  });
+  if (error) { p.textContent = error.message; p.className = 'pesan tampil galat'; return false; }
+  toko.desain = data;
+  toko.warna = wk;
+  toko.ikon = el('sIkon').value;
+  if (latarKini) latarKini.aktif = modeLatar === 'gambar';
+  dz = JSON.parse(JSON.stringify(data));
+  delete dz.latar; delete dz.ikon_kustom;
+  rapikanTampil();
+  dasar = snapshot();
+  segarkanDesain();
+  p.textContent = 'Desain disimpan.';
+  p.className = 'pesan tampil ok';
+  return true;
+}
+
+function resetDesain() {
+  if (!confirm('Kembalikan pilihan desain ke bawaan (Solid, ikon bintang, warna bawaan, semua saklar hidup)? Warna utama tidak berubah. Perubahan baru tersimpan setelah kamu menekan Simpan desain.')) return;
+  dz = {};
+  modeLatar = 'warna';
+  el('sIkon').value = 'bintang';
+  gambarKolomWarna();
+  gambarTampil();
+  gambarLatar();
+  gambarPilihIkon();
+  segarkanDesain();
+}
+
+async function kompresLatar(file) {
+  const img = await new Promise((ok, gagal) => {
+    const i = new Image();
+    const url = URL.createObjectURL(file);
+    i.onload = () => { URL.revokeObjectURL(url); ok(i); };
+    i.onerror = () => { URL.revokeObjectURL(url); gagal(new Error('File bukan gambar yang valid.')); };
+    i.src = url;
+  });
+  let s = Math.min(1, 1000 / Math.max(img.width, img.height));
+  for (let n = 0; n < 6; n++) {
+    const cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(img.width * s));
+    cv.height = Math.max(1, Math.round(img.height * s));
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    for (const q of [0.82, 0.7, 0.58, 0.46]) {
+      const b = await new Promise(r => cv.toBlob(r, 'image/webp', q));
+      if (!b || b.type !== 'image/webp') throw new Error('Browser ini belum bisa memproses gambar ke WebP.');
+      if (b.size <= 80000) return { blob: b, a: cv.width / cv.height };
+    }
     s *= 0.8;
   }
   throw new Error('Gambar terlalu rumit. Pakai gambar lain.');
@@ -776,78 +1077,50 @@ async function unggahLatar(file) {
   latarKini = data.latar;
 }
 
-function gambarLatar() {
-  const box = el('blokLatar');
-  if (!box) return;
-  if (!(toko.fitur_pro || []).includes('gambar_kartu')) {
-    const wa = linkWa(DL.ADMIN_WA);
-    box.innerHTML = '<div class="redup" style="margin-bottom:12px">Gambar latar adalah fitur Pro. Hubungi admin untuk mengaktifkannya di tokomu.</div>' +
-      (wa ? '<a class="tombol putih kecil" style="width:auto" href="' + wa + '" target="_blank" rel="noopener">Hubungi admin lewat WhatsApp</a>' : '');
-    return;
-  }
-  box.innerHTML = '<div class="pratinjau" id="pratinjauLatar"></div>' +
-    '<input id="fileLatar" type="file" accept="image/*" style="display:none">' +
-    '<div class="baris-aksi"><button type="button" id="bPilihLatar" class="tombol putih kecil">' +
-      (latarKini ? 'Ganti gambar' : 'Pilih gambar') + '</button>' +
-    (latarKini ? '<button type="button" id="bHapusLatar" class="tombol merah kecil">Hapus gambar</button>' : '') + '</div>' +
-    '<div class="redup" style="margin-top:8px">Foto otomatis dikecilkan. Warna teks dan stempel diatur di Desain kartu. Tombol Kembalikan ke bawaan tidak menghapus gambar.</div>' +
-    '<div id="pesanLatar" class="pesan"></div>';
-  const info = (t, j) => { const p = el('pesanLatar'); p.textContent = t; p.className = 'pesan tampil ' + j; };
-  el('bPilihLatar').onclick = () => el('fileLatar').click();
-  el('fileLatar').onchange = async () => {
-    const f = el('fileLatar').files[0];
-    el('fileLatar').value = '';
-    if (!f) return;
-    if (f.size > 15 * 1024 * 1024) return info('File terlalu besar (maksimal 15 MB).', 'galat');
-    info('Mengunggah...', 'ok');
-    try {
-      await unggahLatar(f);
-      gambarLatar();
-      segarkanDesain();
-      info('Gambar disimpan.', 'ok');
-    } catch (e) { info(e.message || 'Gagal mengunggah gambar.', 'galat'); }
-  };
-  const hapus = el('bHapusLatar');
-  if (hapus) hapus.onclick = async () => {
-    if (!confirm('Hapus gambar latar kartu?')) return;
-    const { data, error } = await db.rpc('hapus_latar', { p_toko_id: toko.id });
-    if (error) return info(error.message, 'galat');
-    if (data) await db.storage.from('latar').remove([data]);
-    latarKini = null;
-    gambarLatar();
-    segarkanDesain();
-    info('Gambar dihapus.', 'ok');
-  };
+async function muatLatarSaya() {
+  if (!punyaPro()) return;
+  const { data, error } = await db.rpc('latar_toko_saya', { p_toko_id: toko.id });
+  if (error || !data) return;
+  latarKini = data;
+  modeLatar = data.aktif === false ? 'warna' : 'gambar';
+  setDasarMode(modeLatar);
+  tandaiLabelLatar();
+  gambarPanelLatar();
+  segarkanDesain();
 }
 
 function pasangDesain() {
   dz = JSON.parse(JSON.stringify(toko.desain || {}));
+  rapikanTampil();
   latarKini = dz.latar || null;
+  modeLatar = (punyaPro() && dz.latar) ? 'gambar' : 'warna';
   wk = warnaAman(toko.warna);
+  el('sIkon').value = (toko.ikon in IKON_SVG || /^c:[0-9]+$/.test(toko.ikon)) ? toko.ikon : 'bintang';
+  pustaka = { kustom: [], sembunyi: [], siap: false };
+  aturIkon = false;
+  dasar = snapshot();
   gambarBlok();
   gambarKolomWarna();
   gambarTampil();
   gambarLatar();
+  gambarPilihIkon();
   segarkanDesain();
-  el('blokTampil').onchange = (e) => {
-    const k = e.target.dataset.t;
-    if (!k) return;
-    dz.tampil = dz.tampil || {};
-    dz.tampil[k] = e.target.checked;
-    segarkanDesain();
-  };
-  ['blokWarna', 'kolomWarna'].forEach(id => { el(id).oninput = ubahWarna; el(id).onclick = klikDesain; });
+  el('gridIkon').onclick = klikIkon;
+  pasangTambahIkon();
+  el('secDesain').oninput = ubahWarna;
+  el('secDesain').onclick = klikDesain;
   el('bSimpanDesain').onclick = simpanDesain;
-  el('bResetDesain').onclick = async () => {
-    if (!confirm('Kembalikan seluruh desain kartu ke bawaan (solid)?')) return;
-    dz = {};
-    if (await simpanDesain()) { gambarBlok(); gambarKolomWarna(); gambarTampil(); segarkanDesain(); }
-  };
+  el('bResetDesain').onclick = resetDesain;
+  muatPustakaIkon();
+  muatLatarSaya();
 }
 
 function segarkanDariLogo() {
   if (!el('blokTampil')) return;
-  if (dz.tampil) delete dz.tampil.logo;
+  if (dz.tampil) {
+    delete dz.tampil.logo;
+    if (!Object.keys(dz.tampil).length) delete dz.tampil;
+  }
   gambarTampil();
   segarkanDesain();
 }
